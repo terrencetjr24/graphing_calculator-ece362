@@ -6,6 +6,13 @@
 //The basic functions may not be necessary unless we need to manipulate
 //the output to format in some particular way, or for read-ability
 
+void calculatorTest();
+
+void calculatorTest(){
+    return;
+}
+
+
 //Basic integer functions (if dividing between int and float proves inefficient, delete these)
 int intAdd(int, int);
 int intSub(int, int);

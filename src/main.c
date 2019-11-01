@@ -9,5 +9,10 @@
 
 int main(void)
 {
-	for(;;);
+    //Change these tests as needed inside the other source files (eg. calculations.c, or parsing.c)
+    //Don't change this file too much so that that putting our blocks together
+    //is easier after we finish our unit tests
+	calculatorTest();
+	//lcdTest();
+	//parsingTest();
 }
