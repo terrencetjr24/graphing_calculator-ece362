@@ -6,9 +6,15 @@
 //The basic functions may not be necessary unless we need to manipulate
 //the output to format in some particular way, or for read-ability
 
+//Test if the math library is working
+#include <math.h>
+
 void calculatorTest();
 
 void calculatorTest(){
+
+
+    printf("The output is: \n");
     return;
 }
 
@@ -25,33 +31,34 @@ float floatMul(float, float);
 float floatDiv(float, float);
 
 int intAdd(int a, int b){
-
+    return a+b;
 }
 
 int intSub(int a, int b){
-
+    return a-b;
 }
 
 int intMul(int a, int b){
-
+    return a*b;
 }
 
 int intDiv(int a, int b){
-
+    return a/b;
 }
 
 float floatAdd(float a, float b){
-
+    return a+b;
 }
 
 float floatSub(float a, float b){
-
+    return a-b;
 }
 
-float floatSub(float a, float b){
-
+float floatMul(float a, float b){
+    return a*b;
 }
 
-float floatSub(float a, float b){
-
+float floatDiv(float a, float b){
+    return a/b;
 }
+
