@@ -5,6 +5,7 @@
 #include "graphic.h"
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
+#include <math.h>
 
 #define GPIO_ODR_0_D0                 ((uint32_t)0x00000001)
 #define GPIO_ODR_1_D1                 ((uint32_t)0x00000002)
@@ -21,6 +22,7 @@
 #define GPIO_ODR_12_EN                ((uint32_t)0x00001000)
 
 void micro_wait(unsigned int);
+double factorial(double);
 
 // Start of keypad setup
 int col = 0;
@@ -320,3 +322,13 @@ GLCD_WriteString("012345678901234567891");
 for( ; ; );
 return 0;
 }
+
+double factorial(double input){
+    double output = 1;
+    int i;
+    for(i=1; i<= input; i++)
+        output *= i;
+
+    return output;
+}
+
