@@ -332,3 +332,12 @@ double factorial(double input){
     return output;
 }
 
+double radToDeg(double input){
+  double output = (input * 180.0)/3.14159;
+  return output;
+}
+
+double degToRad(double input){
+  double output = (input * 3.14159) / 180.0;
+  return output;
+}
