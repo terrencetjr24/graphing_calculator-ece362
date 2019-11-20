@@ -5,6 +5,27 @@
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
 
+/*
+ * Will be creating 2 different stack within these sets of functions:
+ * one for holding the codes from all the inputs (an int stack)
+ * and another for holding the final numbers and the operations to take place
+ *
+ *It should be fine if these are in addition to the "display stack",
+ *so long as it doesn't take up too much memory
+ *
+ */
+
+float parsing(int * stack){
+    float answer = 0;
+    int workingPointer = 0;
+    while(workingPointer != stackPointer){
+
+    }
+
+    return answer;
+}
+
+
 void init_stack(int* stack){
     int i;
     for(i =0; i< STACK_SIZE; i++){
@@ -15,6 +36,12 @@ void init_stack(int* stack){
 
 //********************************************************************************
 //Note: there are open parenthesis added at the end of certain functions
+//This is the only function that needs to be called by the button pressing function
+//or the interrupt
+//
+//The function will call the "output-to-screen" function after D is pressed and the calculations are done
+//Return Value: will return 0 if everything went fine
+//                   return 1 if there's an error (and we need to beep at someone)
 //********************************************************************************
 int stackManipulation(int * stack, char adding){
     float answer;
@@ -51,40 +78,42 @@ int stackManipulation(int * stack, char adding){
             switch(adding)
                 {
                 case '1': //
-                    stack[stackPointer] = ONE;
+                    stack[stackPointer++] = ONE;
                     break;
                 case '2': //
-                    stack[stackPointer] = TWO;
+                    stack[stackPointer++] = TWO;
                     break;
                 case '3': //
-                    stack[stackPointer] = THREE;
+                    stack[stackPointer++] = THREE;
                     break;
                 case '4': //
-                    stack[stackPointer] = FOUR;
+                    stack[stackPointer++] = FOUR;
                     break;
                 case '5': //
-                    stack[stackPointer] = FIVE;
+                    stack[stackPointer++] = FIVE;
                     break;
                 case '6': //
-                    stack[stackPointer] = SIX;
+                    stack[stackPointer++] = SIX;
                     break;
                 case '7': //
-                    stack[stackPointer] = SEVEN;
+                    stack[stackPointer++] = SEVEN;
                     break;
                 case '8': //
-                    stack[stackPointer] = EIGHT;
+                    stack[stackPointer++] = EIGHT;
                     break;
                 case '9': //
-                    stack[stackPointer] = NINE;
+                    stack[stackPointer++] = NINE;
                     break;
                 case '*': //
-                    stack[stackPointer] = DECIMAL;
+                    //PROVISION TO DISALLOW DECIMALS NEXT TO EACH OTHER
+                    if(stack[stackPointer-1] != DECIMAL)
+                        stack[stackPointer++] = DECIMAL;
                     break;
                 case '0': //
-                    stack[stackPointer] = ZERO;
+                    stack[stackPointer++] = ZERO;
                     break;
                 case '#': //
-                    stack[stackPointer] = NEGATIVE_SIGN;
+                    stack[stackPointer++] = NEGATIVE_SIGN;
                     break;
             }
         }
@@ -92,16 +121,16 @@ int stackManipulation(int * stack, char adding){
             switch(adding)
                     {
                     case '1': //
-                        stack[stackPointer] = PLUS;
+                        stack[stackPointer++] = PLUS;
                         break;
                     case '2': //
-                        stack[stackPointer] = MINUS;
+                        stack[stackPointer++] = MINUS;
                         break;
                     case '3': //
-                        stack[stackPointer] = DIVIDE;
+                        stack[stackPointer++] = DIVIDE;
                         break;
                     case '4': //
-                        stack[stackPointer] = MULTIPLY;
+                        stack[stackPointer++] = MULTIPLY;
                         break;
                     case '5': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -110,24 +139,26 @@ int stackManipulation(int * stack, char adding){
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
                         break;
                     case '7': //
-                        stack[stackPointer] = E_TO_THE_X;
+                        stack[stackPointer++] = E_TO_THE_X;
                         break;
                     case '8': //
                         stack[stackPointer++] = NATURAL_LOG;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '9': //
                         stack[stackPointer++] = LOG10;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '*': //
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '0': //
-                        stack[stackPointer] = CARROT;
+                        //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
+                        if(stack[stackPointer-1] != CARROT)
+                            stack[stackPointer++] = CARROT;
                         break;
                     case '#': //
-                        stack[stackPointer] = CLOSE_PAREN;
+                        stack[stackPointer++] = CLOSE_PAREN;
                         break;
                     }
         }
@@ -136,33 +167,36 @@ int stackManipulation(int * stack, char adding){
                     {
                     case '1': //
                         stack[stackPointer++] = SIN;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '2': //
                         stack[stackPointer++] = COS;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '3': //
                         stack[stackPointer++] = TAN;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '4': //
                         stack[stackPointer++] = ARCSIN;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '5': //
                         stack[stackPointer++] = ARCCOS;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '6': //
                         stack[stackPointer++] = ARCTAN;
-                        stack[stackPointer] = OPEN_PAREN;
+                        stack[stackPointer++] = OPEN_PAREN;
                         break;
                     case '7': //
-                        stack[stackPointer] = FACTORIAL;
+                        //PROVISION TO DISALLOW FACTORALS NEXT TO EACH OTHER
+                        if(stack[stackPointer-1] != FACTORIAL)
+                            stack[stackPointer++] = FACTORIAL;
                         break;
                     case '8': //
-                        stack[stackPointer] = X_VARIABLE;
+                        //THIS IS probably unnecessary here since it's only for graphing mode
+                        stack[stackPointer++] = X_VARIABLE;
                         break;
                     case '9': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -170,15 +204,15 @@ int stackManipulation(int * stack, char adding){
                     case '*': //
                         stack[stackPointer] = GRAPH;
                         //calling the graphing function and resetting stack pointer to zero
-                        //graphing();
                         stackPointer = 0;
+                        //graphing();
                         break;
                     case '0': //
-                        //Will treat these specially within the stackCheck function
+                        //Will treat these specially within the stackCheck function (also DON'T WANT TO
                         stack[stackPointer] = DEG_TO_RAD;
                         if(stackCheck(stack))
                             return 1;
-                        answer = calculations(stack);
+                        //answer = calculations(stack);
                         //outputFunc(answer);
                         stackPointer = 0;
                         break;
@@ -187,37 +221,151 @@ int stackManipulation(int * stack, char adding){
                         stack[stackPointer] = RAD_TO_DEG;
                         if(stackCheck(stack))
                             return 1;
-                        answer = calculations(stack);
+                        //answer = calculations(stack);
                         //outputFunc(answer);
                         stackPointer = 0;
                         break;
                     }
         }
-    stackPointer++;
     }
     return 0;
 }
 
 //Checking that:
-//Open parens == closeing parens
+//Open parens == closing parens
 //...
-
 int stackCheck(int* stack){
     int openParens = 0;
     int closedParens = 0;
+    int i;
 
     //special case for if the last thing pressed was a RAD/DEG conversion
     if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
-        int x = 1;
+        for(i=0; i<stackPointer; i++){
+            if(stack[i] > 11) //if there's anything other than numbers, decimals, or negative sin BEFORE the conversion operation
+                return 1;
+        }
     }
     else{
-
+        //Checking for different cases here
+        for(i=0; i<=stackPointer; i++){
+            if(stack[i] == OPEN_PAREN)
+                openParens++;
+            else if(stack[i] == CLOSE_PAREN)
+                closedParens++;
+        }
     }
+
+    if(openParens != closedParens)
+        return 1;
     return 0;
 }
 
 float calculations(int* stack){
     float answer = 0;
-
+    float operand;
+    if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
+        //Convert the stack to a number then convert it
+        operand = convertToNum(stack, 0, stackPointer);
+        if(stack[stackPointer] == RAD_TO_DEG)
+            answer = radToDeg(operand);
+        else
+            answer = degToRad(operand);
+    }
+    else{
+        //normal parsing operation
+        answer = parsing(stack);
+    }
     return answer;
 }
+
+//**********************************************
+//This function works well enough, but it also produces slight rounding errors
+//that may throw some calculations off
+//**********************************************
+float convertToNum(int* stack, int beg, int end){
+    //Note:
+    //If all errors in input were taken care of carefully, and the proper indices
+    //are given, all the value in this range should be numbers.
+    //And all the numbers are "DEFINED" with their actual number value
+
+    int decimal = -1;
+    int placesBeforeDec = 0;
+    int placesAfterDec = 0;
+
+    float returnVal = 0;
+    int workingIndex;
+
+    int i;
+    //Incrementing through the value in the stack to "find" a decimal and assign it's index
+    for(i=beg; i<=end; i++){
+        if(stack[i] == DECIMAL)
+            decimal = i;
+    }
+
+    //If there's no decimal, treat the number as a whole number
+    if(decimal == -1){
+        placesBeforeDec = (end-beg) +1;
+        //if the number is negative, decrement the number of digits and move the starting index up one
+        if(stack[beg] == NEGATIVE_SIGN){
+            placesBeforeDec--;
+            i=beg+1;
+        }
+        else
+            i=beg;
+
+        while(placesBeforeDec >1){
+            returnVal += stack[i++] * pow(10, placesBeforeDec-1);
+            placesBeforeDec--;
+        }
+    }
+    else{
+        placesBeforeDec = decimal-beg;
+        placesAfterDec = end-decimal;
+
+        //if the number is negative, decrement the number of digits and move the starting index up one
+        if(stack[beg] == NEGATIVE_SIGN){
+            placesBeforeDec--;
+            workingIndex = beg +1;
+        }
+        else
+            workingIndex = beg;
+
+        //Converting from the front of the number to the decimal
+        while(workingIndex != decimal){
+            returnVal += stack[workingIndex++] * pow(10, placesBeforeDec-1);
+            placesBeforeDec--;
+        }
+        //Converting from the bag of the number to the decimal
+        workingIndex = end;
+        while(workingIndex != decimal){
+            returnVal += stack[workingIndex--] * pow(0.1, placesAfterDec);
+            placesAfterDec--;
+        }
+    }
+    //If the number is negative return the negative version
+    if(stack[beg] == NEGATIVE_SIGN)
+        return (-1*returnVal);
+    else
+        return returnVal;
+}
+
+double factorial(double input){
+    double output = 1;
+    int i;
+    for(i=1; i<= input; i++)
+        output *= i;
+
+    return output;
+}
+
+double radToDeg(double input){
+  double output = (input * 180.0)/3.14159;
+  return output;
+}
+
+double degToRad(double input){
+  double output = (input * 3.14159) / 180.0;
+  return output;
+}
+

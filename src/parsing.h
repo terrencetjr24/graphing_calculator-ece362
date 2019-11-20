@@ -66,6 +66,10 @@ int stackManipulation(int *, char input);
 int stackCheck(int* stck);
 //used to calculate the result after enter is pressed
 float calculations(int* stack);
+//Used for converting a part of the stack to a number
+float convertToNum(int* stack, int firstIndex, int lastIndex);
+//The actual parsing function where everything with be going on (including calling different calculations)
+float parsing(int * stack);
 
 double factorial(double);
 double radToDeg(double input);
