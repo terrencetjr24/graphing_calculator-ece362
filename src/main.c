@@ -6,6 +6,7 @@
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
 #include <math.h>
+#include "parsing.h"
 
 #define GPIO_ODR_0_D0                 ((uint32_t)0x00000001)
 #define GPIO_ODR_1_D1                 ((uint32_t)0x00000002)
@@ -22,7 +23,6 @@
 #define GPIO_ODR_12_EN                ((uint32_t)0x00001000)
 
 void micro_wait(unsigned int);
-double factorial(double);
 
 // Start of keypad setup
 int col = 0;
@@ -278,6 +278,7 @@ void init_hardware(void)
 int main(void)
 {
 	init_hardware();
+	init_stack(buttonStack);
 
 	/*for(int i = 0; i < 128; i++) {
 		on(i,10);
