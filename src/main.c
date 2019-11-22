@@ -1,5 +1,5 @@
 // (c) Rados≥aw KwiecieÒ, radek@dxp.pl
-// http://en.radzio.dxp.pl
+// http://en.radzio.dxp.pl //Adding stuff
 //-------------------------------------------------------------------------------------------------
 #include "KS0108.h"
 #include "graphic.h"
