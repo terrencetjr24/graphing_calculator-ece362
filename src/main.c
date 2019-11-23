@@ -343,10 +343,12 @@ int main(void)
     GLCD_GoTo(0,7);
     GLCD_WriteString(snum);*/
 
+    int buttonStack[STACK_SIZE]; //Taking 21 button presses now maybe more later
+    init_stack(buttonStack);
     while (1)
     {
         char key = get_char_key();
-
+        int error = stackManipulation(buttonStack, key);
         if (key == 'C')
         {
             index = 0;

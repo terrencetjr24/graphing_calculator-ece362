@@ -52,10 +52,7 @@
 //Stack value
 #define STACK_SIZE 21
 
-//Parsing global variables
-int alternateFunc = NORMAL;
-int buttonStack[STACK_SIZE]; //Taking 21 button presses now maybe more later
-int stackPointer = 0;
+
 
 //Function declarations
 //initializing stack to -1 s
@@ -70,6 +67,8 @@ float calculations(int* stack);
 float convertToNum(int* stack, int firstIndex, int lastIndex);
 //The actual parsing function where everything with be going on (including calling different calculations)
 float parsing(int * stack);
+//Converting from a float to a character string
+int floatToString(float input, char* outputString);
 
 double factorial(double);
 double radToDeg(double input);

@@ -5,6 +5,10 @@
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
 
+//Parsing global variables
+int alternateFunc = NORMAL;
+int stackPointer = 0;
+
 /*
  * Will be creating 2 different stack within these sets of functions:
  * one for holding the codes from all the inputs (an int stack)
@@ -21,10 +25,8 @@ float parsing(int * stack){
     while(workingPointer != stackPointer){
 
     }
-
     return answer;
 }
-
 
 void init_stack(int* stack){
     int i;
@@ -122,15 +124,19 @@ int stackManipulation(int * stack, char adding){
                     {
                     case '1': //
                         stack[stackPointer++] = PLUS;
+                        alternateFunc = NORMAL;
                         break;
                     case '2': //
                         stack[stackPointer++] = MINUS;
+                        alternateFunc = NORMAL;
                         break;
                     case '3': //
                         stack[stackPointer++] = DIVIDE;
+                        alternateFunc = NORMAL;
                         break;
                     case '4': //
                         stack[stackPointer++] = MULTIPLY;
+                        alternateFunc = NORMAL;
                         break;
                     case '5': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -140,25 +146,31 @@ int stackManipulation(int * stack, char adding){
                         break;
                     case '7': //
                         stack[stackPointer++] = E_TO_THE_X;
+                        alternateFunc = NORMAL;
                         break;
                     case '8': //
                         stack[stackPointer++] = NATURAL_LOG;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '9': //
                         stack[stackPointer++] = LOG10;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '*': //
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '0': //
                         //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
                         if(stack[stackPointer-1] != CARROT)
                             stack[stackPointer++] = CARROT;
+                        alternateFunc = NORMAL;
                         break;
                     case '#': //
                         stack[stackPointer++] = CLOSE_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     }
         }
@@ -168,35 +180,43 @@ int stackManipulation(int * stack, char adding){
                     case '1': //
                         stack[stackPointer++] = SIN;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '2': //
                         stack[stackPointer++] = COS;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '3': //
                         stack[stackPointer++] = TAN;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '4': //
                         stack[stackPointer++] = ARCSIN;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '5': //
                         stack[stackPointer++] = ARCCOS;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '6': //
                         stack[stackPointer++] = ARCTAN;
                         stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
                         break;
                     case '7': //
                         //PROVISION TO DISALLOW FACTORALS NEXT TO EACH OTHER
                         if(stack[stackPointer-1] != FACTORIAL)
                             stack[stackPointer++] = FACTORIAL;
+                        alternateFunc = NORMAL;
                         break;
                     case '8': //
                         //THIS IS probably unnecessary here since it's only for graphing mode
                         stack[stackPointer++] = X_VARIABLE;
+                        alternateFunc = NORMAL;
                         break;
                     case '9': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -206,6 +226,7 @@ int stackManipulation(int * stack, char adding){
                         //calling the graphing function and resetting stack pointer to zero
                         stackPointer = 0;
                         //graphing();
+                        alternateFunc = NORMAL;
                         break;
                     case '0': //
                         //Will treat these specially within the stackCheck function (also DON'T WANT TO
@@ -215,6 +236,7 @@ int stackManipulation(int * stack, char adding){
                         //answer = calculations(stack);
                         //outputFunc(answer);
                         stackPointer = 0;
+                        alternateFunc = NORMAL;
                         break;
                     case '#': //
                         //Will treat these specially within the stackCheck function
@@ -224,6 +246,7 @@ int stackManipulation(int * stack, char adding){
                         //answer = calculations(stack);
                         //outputFunc(answer);
                         stackPointer = 0;
+                        alternateFunc = NORMAL;
                         break;
                     }
         }
@@ -369,3 +392,147 @@ double degToRad(double input){
   return output;
 }
 
+//In this configuration would need a line like this in the output call
+/*
+ * int code = floatToString(dummy, output);
+    if(code == 1)
+        gcvt(dummy, 5, output);
+    else if (code >1)
+        gcvt(dummy, code + 5, output);
+ *
+ *Otherwise we can just uncomment the "gcvt()" calls within the function below
+ *(But I'm unsure if this will work, since it doesn't work in the simulator)
+ */
+
+int floatToString(float input, char* output){
+    int decimalPlaces = 100000;
+    int digitsBeforeDec = 0;
+    double intPartInput = 0;
+    double decPartInput = 0;
+    int holder;
+
+    //I forget what this is doing, but I know it is very much essential
+    decPartInput = fabs(decimalPlaces * (modf(input, &intPartInput)));
+    intPartInput = fabs(intPartInput);
+    if(decPartInput == decimalPlaces){
+        decPartInput = 0;
+        intPartInput += 1;
+    }
+    //Figuring out the number of digits before decimal point
+    holder = (int)intPartInput;
+    while(holder){
+        digitsBeforeDec++;
+        holder = holder /10;
+    }
+    //printf("The digits before decimal: %d\n", digitsBeforeDec);
+
+    //Zero case to deal with "negative" zero
+    if(((int)intPartInput == 0) && ((int)decPartInput == 0)){
+        sprintf(output,"0.0");
+        return 0;
+    }
+    //Error to deal with infinity or negative infinity (a cap of 2 billion, 147 million)
+    else if(((int)intPartInput >= 2147000000) | ((int)intPartInput <= -2147000000)){
+        sprintf(output, "Error (too big or too small)");
+        return 0;
+    }
+    //A number is -0.####
+    else if((input < 0) && (input > -1)){
+        //gcvt(input, 5, output);
+        return 1;
+    }
+    //Every other number
+    else{
+        //gcvt(input, beforeDecimal + 5, output);
+        return digitsBeforeDec;
+    }
+}
+
+/*
+void floatToString(float input, char* output){
+    int outIndex = 0;
+    int decimalPlaces = 100000;
+    float dummy;
+    int digitsBeforeDec = 0;
+    int digitsAfterDec = 0;
+    int holder;
+
+    double intPartInput = 0;
+    double decPartInput = 0;
+    int inputZeroPadding = -1;
+    //I forget what this is doing, but I know it is very much essential
+    decPartInput = fabs(decimalPlaces * (modf(input, &intPartInput)));
+    intPartInput = fabs(intPartInput);
+    if(decPartInput == decimalPlaces){
+        decPartInput = 0;
+        intPartInput += 1;
+    }
+    //Figuring out the number of zeros to pad after the decimal
+    dummy = decPartInput;
+    while((dummy < decimalPlaces) && (decPartInput !=0)){
+        dummy *=10;
+        inputZeroPadding++;
+    }
+    //Figuring out the number of digits before and after decimal point
+        holder = (int)intPartInput;
+        while(holder){
+            digitsBeforeDec++;
+            holder = holder /10;
+        }
+        holder = (int)decPartInput;
+        while(holder){
+            //This is to make sure we don't add unnecessary zeros at the end
+            if((holder) != ((holder/10) * 10))
+                digitsAfterDec++;
+            holder = holder / 10;
+        }
+        printf("The digits before decimal: %d\nAfter the decimal: %d", digitsBeforeDec, digitsAfterDec);
+
+    //Zero case to deal with "negative" zero
+    if(((int)intPartInput == 0) && ((int)decPartInput == 0)){
+        sprintf(output,"0.0");
+        gcvt(0.0, 2, output);
+    }
+    //Error to deal with infinity or negative infinity (a cap of 2 billion, 147 million)
+    else if(((int)intPartInput >= 2147000000) | ((int)intPartInput <= -2147000000)){
+        sprintf(output, "Error (too big or too small)");
+    }
+    else if((input < 0) && (input > -1)){
+        output[outIndex++] = '-';
+        output[outIndex++] = '0';
+        output[outIndex++] = '.';
+        //Printing all the padding values
+        while(inputZeroPadding-- > 0){
+            output[outIndex++] = '0';
+        }
+        //Printing all the values after the decimal
+        while(digitsAfterDec){
+            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsAfterDec));
+            digitsAfterDec--;
+        }
+        output[outIndex] = '\0';
+        gcvt(input, 5, output);
+    }
+    else{
+        //Printing a negatie sign if the value is negative
+        if(input < 0)
+            output[outIndex++] = '-';
+        //Printing all the values before the decimal
+        while(digitsBeforeDec){
+            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsBeforeDec));
+            digitsBeforeDec--;
+        }
+        output[outIndex++] = '.';
+        //Printing out the padding zeros
+        while((inputZeroPadding--) && (decPartInput !=0))
+            output[outIndex++] = '0';
+        while(digitsAfterDec){
+            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsAfterDec));
+            digitsAfterDec--;
+        }
+        output[outIndex] = '\0';
+        gcvt(dummy, beforeDecimal + 5, output);
+    }
+    return;
+}
+*/
