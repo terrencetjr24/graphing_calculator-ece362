@@ -52,6 +52,16 @@
 //Stack value
 #define STACK_SIZE 21
 
+//Calculations structure
+
+struct calulationObj
+{
+   float number;
+   int code;
+   char numOrCode; //If the value is a 0 it's a number,
+                    //if it's greater than 1 that's it's precedence (higher == higher precedence)
+                    //Also function will have special codes to differentiate them as funcs
+};
 
 
 //Function declarations
@@ -61,12 +71,10 @@ void init_stack(int* stack);
 int stackManipulation(int *, char input);
 //Called within above function to check the validity of an input [returns a 1 for error, 0 for no error]
 int stackCheck(int* stck);
-//used to calculate the result after enter is pressed
+//used to calculate the result after enter is pressed (this is where everything is going on)
 float calculations(int* stack);
 //Used for converting a part of the stack to a number
 float convertToNum(int* stack, int firstIndex, int lastIndex);
-//The actual parsing function where everything with be going on (including calling different calculations)
-float parsing(int * stack);
 //Converting from a float to a character string
 int floatToString(float input, char* outputString);
 

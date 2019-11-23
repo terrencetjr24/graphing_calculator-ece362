@@ -1,5 +1,6 @@
-#include <math.h>
+#include <math.h> //For the calculations
 #include <stdlib.h>
+#include <string.h> //For memset (clearing the struct)
 #include "parsing.h"
 
 #include "stm32f0xx.h"
@@ -19,12 +20,75 @@ int stackPointer = 0;
  *
  */
 
-float parsing(int * stack){
+float calculations(int* stack){
     float answer = 0;
     int workingPointer = 0;
+    int secondaryPointer;
+    int calcStackPointer = 0;
+    struct calulationObj calcStack[STACK_SIZE];
+    memset(&calcStack, INIT_VALUE, sizeof(calcStack));
+    //The stack pointer will be the size of objects in the stack, and the next available location
+    //A loop for creating the calcStack
     while(workingPointer != stackPointer){
-
+        //If the value is a digit
+        if((stack[workingPointer] <= NEGATIVE_SIGN) && (stack[workingPointer] > -1)){
+            secondaryPointer = workingPointer;
+            while((stack[secondaryPointer] < 12) && (secondaryPointer < stackPointer))
+                secondaryPointer++;
+            //printf("beg val: %d , end val: %d\n", workingPointer, secondaryPointer-1);
+            calcStack[calcStackPointer].number = convertToNum(stack, workingPointer, secondaryPointer-1);
+            //printf("The number 'read': %f\n", calcStack[calcStackPointer].number); //Just to check
+            calcStack[calcStackPointer++].numOrCode = 0;
+            workingPointer = secondaryPointer-1;
+        }
+        else{
+            calcStack[calcStackPointer].code = stack[workingPointer];
+            //Assigning the precedence of each operator
+            int operator = stack[workingPointer];
+            if((operator == PLUS) | (operator == MINUS))
+                calcStack[calcStackPointer++].numOrCode = 1;
+            else if ((operator == DIVIDE) | (operator == MULTIPLY))
+                calcStack[calcStackPointer++].numOrCode = 2;
+            //
+            //******************************************
+            //NEED TO ADD MORE ELSE IFs here
+            //to COVER MORE OF THE PRECEDENCE CASES
+            //*****************************************
+            //
+        }
+        //printf("Iteration: %d\n", workingPointer);
+        workingPointer++;
     }
+    //Just for checking the calcStack (simulation)
+    //printCalcStack(calcStack, calcStackPointer);
+
+    //THE ACTUAL ALGORITHM
+
+    //These are both only arrays of indices, and the actual values will be accessed from the calcStack (can make char to reduce space)
+    int outputQueue[STACK_SIZE];
+    int indexOQ=0;
+    int operatorStack[STACK_SIZE];
+    int indexOS=0;
+    memset(&outputQueue, INIT_VALUE, sizeof(outputQueue));
+    memset(&operatorStack, INIT_VALUE, sizeof(operatorStack));
+    workingPointer = 0;
+
+    while(workingPointer != calcStackPointer){
+        //Number
+        if(calcStack[workingPointer].numOrCode == 0){
+            outputQueue[indexOQ++] = workingPointer;
+            workingPointer++
+        }
+        //Function
+        else if(){
+
+        }
+        //Operator
+        else if(){
+
+        }
+    }
+
     return answer;
 }
 
@@ -284,24 +348,6 @@ int stackCheck(int* stack){
     return 0;
 }
 
-float calculations(int* stack){
-    float answer = 0;
-    float operand;
-    if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
-        //Convert the stack to a number then convert it
-        operand = convertToNum(stack, 0, stackPointer);
-        if(stack[stackPointer] == RAD_TO_DEG)
-            answer = radToDeg(operand);
-        else
-            answer = degToRad(operand);
-    }
-    else{
-        //normal parsing operation
-        answer = parsing(stack);
-    }
-    return answer;
-}
-
 //**********************************************
 //This function works well enough, but it also produces slight rounding errors
 //that may throw some calculations off
@@ -315,9 +361,15 @@ float convertToNum(int* stack, int beg, int end){
     int decimal = -1;
     int placesBeforeDec = 0;
     int placesAfterDec = 0;
-
-    float returnVal = 0;
+    float returnVal = stack[beg];
     int workingIndex;
+
+    if(beg == end){
+        printf("The beg equals the ends\n");
+        return returnVal;
+    }
+    //returning it to zero since it wasn't needed earlier
+    returnVal = 0;
 
     int i;
     //Incrementing through the value in the stack to "find" a decimal and assign it's index
@@ -337,7 +389,7 @@ float convertToNum(int* stack, int beg, int end){
         else
             i=beg;
 
-        while(placesBeforeDec >1){
+        while(placesBeforeDec >0){
             returnVal += stack[i++] * pow(10, placesBeforeDec-1);
             placesBeforeDec--;
         }
@@ -366,6 +418,7 @@ float convertToNum(int* stack, int beg, int end){
             placesAfterDec--;
         }
     }
+
     //If the number is negative return the negative version
     if(stack[beg] == NEGATIVE_SIGN)
         return (-1*returnVal);
@@ -398,7 +451,7 @@ double degToRad(double input){
     if(code == 1)
         gcvt(dummy, 5, output);
     else if (code >1)
-        gcvt(dummy, code + 5, output);
+        gcvt(dummy, code + 4, output);
  *
  *Otherwise we can just uncomment the "gcvt()" calls within the function below
  *(But I'm unsure if this will work, since it doesn't work in the simulator)
@@ -443,8 +496,8 @@ int floatToString(float input, char* output){
     }
     //Every other number
     else{
-        //gcvt(input, beforeDecimal + 5, output);
-        return digitsBeforeDec;
+        //gcvt(input, beforeDecimal + 4, output);
+        return digitsBeforeDec+1; //Just in case there's a positve 0.## number
     }
 }
 
