@@ -10,7 +10,7 @@
 int alternateFunc = NORMAL;
 int stackPointer = 0;
 
-/*
+/* Note:
  * Will be creating 2 different stack within these sets of functions:
  * one for holding the codes from all the inputs (an int stack)
  * and another for holding the final numbers and the operations to take place
@@ -26,7 +26,7 @@ float calculations(int* stack){
     int secondaryPointer;
     int calcStackPointer = 0;
     struct calulationObj calcStack[STACK_SIZE];
-    memset(&calcStack, INIT_VALUE, sizeof(calcStack));
+    memset(&calcStack, 0, sizeof(calcStack));
     //The stack pointer will be the size of objects in the stack, and the next available location
     //A loop for creating the calcStack
     while(workingPointer != stackPointer){
@@ -35,9 +35,11 @@ float calculations(int* stack){
             secondaryPointer = workingPointer;
             while((stack[secondaryPointer] < 12) && (secondaryPointer < stackPointer))
                 secondaryPointer++;
+            //Just for simulating
             //printf("beg val: %d , end val: %d\n", workingPointer, secondaryPointer-1);
             calcStack[calcStackPointer].number = convertToNum(stack, workingPointer, secondaryPointer-1);
-            //printf("The number 'read': %f\n", calcStack[calcStackPointer].number); //Just to check
+            //Just for simulating
+            //printf("The number 'read': %f\n", calcStack[calcStackPointer].number);
             calcStack[calcStackPointer++].numOrCode = 0;
             workingPointer = secondaryPointer-1;
         }
@@ -49,46 +51,298 @@ float calculations(int* stack){
                 calcStack[calcStackPointer++].numOrCode = 1;
             else if ((operator == DIVIDE) | (operator == MULTIPLY))
                 calcStack[calcStackPointer++].numOrCode = 2;
-            //
-            //******************************************
-            //NEED TO ADD MORE ELSE IFs here
-            //to COVER MORE OF THE PRECEDENCE CASES
-            //*****************************************
-            //
+            else if (operator == CARROT)
+                calcStack[calcStackPointer++].numOrCode = 3;
+            else if (operator == OPEN_PAREN)
+                calcStack[calcStackPointer++].numOrCode = 4;
+            else if (operator == CLOSE_PAREN)
+                calcStack[calcStackPointer++].numOrCode = 5;
+            //Nothing else should be expected here other than functions (to be safe could make this else if)
+            else {
+                calcStack[calcStackPointer++].numOrCode = 6;
+            }
         }
         //printf("Iteration: %d\n", workingPointer);
         workingPointer++;
     }
     //Just for checking the calcStack (simulation)
-    //printCalcStack(calcStack, calcStackPointer);
+    //printf("The calc stack: \n");
+    printCalcStack(calcStack, calcStackPointer);
 
     //THE ACTUAL ALGORITHM
 
-    //These are both only arrays of indices, and the actual values will be accessed from the calcStack (can make char to reduce space)
-    int outputQueue[STACK_SIZE];
+    struct calulationObj outputQueue[STACK_SIZE];
     int indexOQ=0;
-    int operatorStack[STACK_SIZE];
+    struct calulationObj operatorStack[STACK_SIZE];
     int indexOS=0;
-    memset(&outputQueue, INIT_VALUE, sizeof(outputQueue));
-    memset(&operatorStack, INIT_VALUE, sizeof(operatorStack));
+    memset(&outputQueue, 0, sizeof(outputQueue));
+    memset(&operatorStack, 0, sizeof(operatorStack));
     workingPointer = 0;
-
     while(workingPointer != calcStackPointer){
         //Number
         if(calcStack[workingPointer].numOrCode == 0){
-            outputQueue[indexOQ++] = workingPointer;
-            workingPointer++
+            memcpy(&(outputQueue[indexOQ++]), &(calcStack[workingPointer]), sizeof(struct calulationObj) );
         }
         //Function
-        else if(){
-
+        else if(calcStack[workingPointer].numOrCode == 6){
+             memcpy(&(operatorStack[indexOS++]), &(calcStack[workingPointer]), sizeof(struct calulationObj) );
         }
-        //Operator
-        else if(){
-
+        //A left paranthesis
+        else if(calcStack[workingPointer].numOrCode == 4){
+            memcpy(&(operatorStack[indexOS++]), &(calcStack[workingPointer]), sizeof(struct calulationObj) );
         }
+        //A right paranthesis
+        else if(calcStack[workingPointer].numOrCode == 5){
+            //Do stuff
+            while(operatorStack[indexOS-1].numOrCode != 4){
+                memcpy(&(outputQueue[indexOQ++]), &(operatorStack[indexOS-1]), sizeof(struct calulationObj) );
+                indexOS--;
+            }
+            //Popping the left paranthesis from the operator stack and "discarding it"
+            indexOS--;
+        }
+        //Operator (could use an else if here to be more safe)
+        else{
+            //while (there's a function on top of stack, or operator on stack with higher precedence,
+            // or the operator at top of stack has equal precedence and is left associative [assumption: carrots are the only right associative operator that we have])
+            //AND the operator at the top of the stack is NOT a left paranthesis
+            //Pop operators from the operator stack to the output queue
+            while((indexOS > 0) && (operatorStack[indexOS-1].numOrCode != 4) && ( (operatorStack[indexOS-1].numOrCode == 5) | (operatorStack[indexOS-1].numOrCode > calcStack[workingPointer].numOrCode) | ((operatorStack[indexOS-1].numOrCode == calcStack[workingPointer].numOrCode) && (operatorStack[indexOS-1].code != CARROT) )) ){
+                memcpy(&(outputQueue[indexOQ++]), &(operatorStack[indexOS-1]), sizeof(struct calulationObj) );
+                indexOS--;
+            }
+            //Now... Pushing it to the operator stack
+            memcpy(&(operatorStack[indexOS++]), &(calcStack[workingPointer]), sizeof(struct calulationObj) );
+        }
+        workingPointer++;
     }
+    //After the while loop pop everything from the operator stack to the output queue
+    while(indexOS !=0){
+        memcpy(&(outputQueue[indexOQ++]), &(operatorStack[indexOS-1]), sizeof(struct calulationObj) );
+        indexOS--;
+    }
+    //printf("The outputQueue size: %d\n", indexOQ);
+    //printf("The output queue: \n");
+    printCalcStack(outputQueue, indexOQ);
 
+    workingPointer = 0;
+    secondaryPointer = 0;
+    int thirdPointer = 0;
+    float holder = 0;
+    while(workingPointer != indexOQ){
+        if((outputQueue[workingPointer].numOrCode == 0) | (outputQueue[workingPointer].dead == 1))
+            asm("nop"); //This might not work lol
+        //ACTUAL CALCULATIONS!!!
+        else{
+            switch(outputQueue[workingPointer].code){
+                case PLUS:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    thirdPointer = secondaryPointer - 1;
+                    while(outputQueue[thirdPointer].dead == 1)
+                        thirdPointer--;
+                    //Doing calculation
+                    holder = outputQueue[thirdPointer].number + outputQueue[secondaryPointer].number;
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    outputQueue[thirdPointer].dead = 1;
+                    break;
+                case MINUS:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    thirdPointer = secondaryPointer - 1;
+                    while(outputQueue[thirdPointer].dead == 1)
+                        thirdPointer--;
+                    //Doing calculation
+                    holder = outputQueue[thirdPointer].number - outputQueue[secondaryPointer].number;
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    outputQueue[thirdPointer].dead = 1;
+                    break;
+                case DIVIDE:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    thirdPointer = secondaryPointer - 1;
+                    while(outputQueue[thirdPointer].dead == 1)
+                        thirdPointer--;
+                    //Doing calculation
+                    holder = outputQueue[thirdPointer].number / outputQueue[secondaryPointer].number;
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    outputQueue[thirdPointer].dead = 1;
+                    break;
+                case MULTIPLY:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    thirdPointer = secondaryPointer - 1;
+                    while(outputQueue[thirdPointer].dead == 1)
+                        thirdPointer--;
+                    //Doing calculation
+                    holder = outputQueue[thirdPointer].number * outputQueue[secondaryPointer].number;
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    outputQueue[thirdPointer].dead = 1;
+                    break;
+                case E_TO_THE_X:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = exp(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case NATURAL_LOG:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = log(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case LOG10:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = log10(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case CARROT:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    thirdPointer = secondaryPointer - 1;
+                    while(outputQueue[thirdPointer].dead == 1)
+                        thirdPointer--;
+                    //Doing calculation
+                    holder = pow(outputQueue[thirdPointer].number, outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    outputQueue[thirdPointer].dead = 1;
+                    break;
+                case SIN:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = sin(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case COS:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = cos(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case TAN:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = tan(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case ARCSIN:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = asin(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case ARCCOS:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = acos(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case ARCTAN:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = atan(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case FACTORIAL:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = factorial(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+            }
+        }
+        //printf("At position [%d] The holder value thus far: %f\n",workingPointer, holder);
+        holder = 0;
+        workingPointer++;
+    }
+    //The last value in the queue will hold the final value
+    answer = outputQueue[indexOQ-1].number;
     return answer;
 }
 
@@ -272,9 +526,8 @@ int stackManipulation(int * stack, char adding){
                         alternateFunc = NORMAL;
                         break;
                     case '7': //
-                        //PROVISION TO DISALLOW FACTORALS NEXT TO EACH OTHER
-                        if(stack[stackPointer-1] != FACTORIAL)
-                            stack[stackPointer++] = FACTORIAL;
+                        stack[stackPointer++] = FACTORIAL;
+                        stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
                         break;
                     case '8': //
@@ -297,7 +550,7 @@ int stackManipulation(int * stack, char adding){
                         stack[stackPointer] = DEG_TO_RAD;
                         if(stackCheck(stack))
                             return 1;
-                        //answer = calculations(stack);
+                        answer = degToRad(convertToNum(stack, 0, stackPointer-1));
                         //outputFunc(answer);
                         stackPointer = 0;
                         alternateFunc = NORMAL;
@@ -307,7 +560,7 @@ int stackManipulation(int * stack, char adding){
                         stack[stackPointer] = RAD_TO_DEG;
                         if(stackCheck(stack))
                             return 1;
-                        //answer = calculations(stack);
+                        answer = radToDeg(convertToNum(stack, 0, stackPointer-1));
                         //outputFunc(answer);
                         stackPointer = 0;
                         alternateFunc = NORMAL;
@@ -428,8 +681,9 @@ float convertToNum(int* stack, int beg, int end){
 
 double factorial(double input){
     double output = 1;
+    int limit = (int)input;
     int i;
-    for(i=1; i<= input; i++)
+    for(i=1; i<= limit; i++)
         output *= i;
 
     return output;

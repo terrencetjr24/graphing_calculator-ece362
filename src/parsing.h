@@ -38,9 +38,12 @@
 #define ARCSIN          25
 #define ARCCOS          26
 #define ARCTAN          27
+//TREATING THIS AS A FUNCTION
 #define FACTORIAL       28
+
 #define X_VARIABLE      29
 #define GRAPH           30
+//Treated specially, don't need to be accounted for in the calculation switch statement of parsing
 #define DEG_TO_RAD      31
 #define RAD_TO_DEG      32
 
@@ -52,15 +55,26 @@
 //Stack value
 #define STACK_SIZE 21
 
+//Notes:
+/*We can try to get around the factorial issue (and just treat it specially) to allow for inputs like (2+(3!))
+ * or we can continue to treat is as a single input function (eg. Fact(35) )
+ * Further, DegToRad & RadToDeg are currently being treated as functions that will only be
+ * carried out on a single number after their respective buttons are pressed
+ * (see the bottom of "stackManipulation()"), but they can be made into functions as well with more work
+ *
+ */
+
 //Calculations structure
 
 struct calulationObj
 {
    float number;
    int code;
-   char numOrCode; //If the value is a 0 it's a number,
-                    //if it's greater than 1 that's it's precedence (higher == higher precedence)
-                    //Also function will have special codes to differentiate them as funcs
+   char numOrCode;  //If the value is a 0 it's a number,
+                    //if it's greater than 0 that's it's precedence (higher == higher precedence)
+                    //Also functions will be DENOTED W/ A six (func. == 6)
+   char dead;       //This will be used in the output queue during calculations
+                    //1 == DEAD ; 0 == ALIVE
 };
 
 
