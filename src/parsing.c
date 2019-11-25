@@ -67,7 +67,7 @@ float calculations(int* stack){
     }
     //Just for checking the calcStack (simulation)
     //printf("The calc stack: \n");
-    printCalcStack(calcStack, calcStackPointer);
+    //printCalcStack(calcStack, calcStackPointer);
 
     //THE ACTUAL ALGORITHM
 
@@ -123,7 +123,7 @@ float calculations(int* stack){
     }
     //printf("The outputQueue size: %d\n", indexOQ);
     //printf("The output queue: \n");
-    printCalcStack(outputQueue, indexOQ);
+    //printCalcStack(outputQueue, indexOQ);
 
     workingPointer = 0;
     secondaryPointer = 0;
