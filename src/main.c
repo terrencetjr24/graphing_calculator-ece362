@@ -8,6 +8,7 @@
 #include "string.h"
 #include <math.h>
 #include "parsing.h"
+#include <stdint.h>
 
 #define PI 3.14159265
 
@@ -346,17 +347,17 @@ void graph(void) {
 
 int main(void)
 {
-	int codestack[STACK_SIZE];
+    uint8_t codestack[STACK_SIZE];
 	memset(&codestack,-1,sizeof codestack);
 
 	init_hardware();
-	char enter = 'D';
 
 	char expression[46] = ">";
-	int index = 1;
+	uint8_t index = 1;
 	char result[STACK_SIZE / 2 + 1] = ">";
 	//char error_mess[STACK_SIZE / 2 + 1] = "YOU IDIOT! Press D";
-	int error = 0;
+	//Memory reduction
+	uint8_t error = 0;
 
     char line1[21];
     memcpy(line1,expression,20);
@@ -367,8 +368,6 @@ int main(void)
 
     GLCD_GoTo(0,0);
     GLCD_WriteString(line1);//write first half of expression
-    GLCD_GoTo(0,1);
-    GLCD_WriteString(line2);//write second half of expression
 	while (1)
 	{
 		char key = get_char_key();
@@ -386,40 +385,71 @@ int main(void)
 
 		if (error == 1)
 		{
-            GLCD_GoTo(0,4);
-            GLCD_WriteString("error given");//write first half of expression
+            GLCD_GoTo(0,2);
+            GLCD_WriteString("ERROR, PRESS ENTER!!!");//write first half of expression
 			// beep begins
 			//print out the error message
-			while (get_char_key() != enter);
+			while (get_char_key() != 'D');
+
 			// clear screen
+			//ClearScreenFunction()
+			memset(expression,0,sizeof expression);
+			strcpy(expression, ">");
 			error = 0;
 			index = 1;
-			strcpy(line1,">");
-			strcpy(line2," ");
+			strcpy(line1,">                    ");
+			strcpy(line2,"                     ");
 			GLCD_GoTo(0,0);
 			GLCD_WriteString(line1);//write first half of expression
 			GLCD_GoTo(0,1);
 			GLCD_WriteString(line2);//write second half of expression
+			GLCD_GoTo(0,2);
+			GLCD_WriteString(line2);
 		}
 		else if (error == 2)
 		{
-            GLCD_GoTo(0,3);
-            GLCD_WriteString("calc works Result^");//write first half of expression
+		    //Formatting the answer
+		    strcpy(line2, "Ans: ");
+		    strcat(line2, result);
 	        GLCD_GoTo(0,2);
-	        GLCD_WriteString(result);//write first half of expression
-	        GLCD_GoTo(0,1);
-	        GLCD_WriteString("Press Enter");//write first half of expression
-			while (get_char_key() != enter);
+	        GLCD_WriteString(line2);//write output
 
+	        GLCD_GoTo(0,3);
+	        GLCD_WriteString("Press Enter");//write first half of expression
+			while (get_char_key() != 'D');
+			//Formatting the previous answer
+			strcpy(line2, "Prev Ans: ");
+			strcat(line2, result);
+			GLCD_GoTo(0,2);
+			GLCD_WriteString(line2);//write output
 			// clear screen
+			//ClearScreenFunction()
+			memset(expression,0,sizeof expression);
+			strcpy(expression, ">");
 			error = 0;
 			index = 1;
-			strcpy(line1,">                  ");
-			strcpy(line2,"                   ");
+			strcpy(line1,">                    ");
+			strcpy(line2,"                     ");
 			GLCD_GoTo(0,0);
 			GLCD_WriteString(line1);//write first half of expression
 			GLCD_GoTo(0,1);
 			GLCD_WriteString(line2);//write second half of expression
+			GLCD_GoTo(0,3);
+			GLCD_WriteString(line2);
+		}
+		else if (error == 3){
+		    memset(expression,0,sizeof expression);
+		    strcpy(expression, ">");
+		    error = 0;
+		    index = 1;
+		    strcpy(line1,">                    ");
+		    strcpy(line2,"                     ");
+		    GLCD_GoTo(0,0);
+		    GLCD_WriteString(line1);//write first half of expression
+		    GLCD_GoTo(0,1);
+		    GLCD_WriteString(line2);//write second half of expression
+		    GLCD_GoTo(0,2);
+		    GLCD_WriteString(line2);
 		}
 
 	}

@@ -35,7 +35,7 @@ all: 362_project.elf
 362_project.elf: $(OBJS) $(USER_OBJS) /Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/LinkerScript.ld
 	@echo 'Building target: $@'
 	@echo 'Invoking: MCU GCC Linker'
-	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -T"/Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "362_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
+	arm-none-eabi-gcc -mcpu=cortex-m0 -mthumb -mfloat-abi=soft -u _printf_float -T"/Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/LinkerScript.ld" -Wl,-Map=output.map -Wl,--gc-sections -o "362_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -lm
 	@echo 'Finished building target: $@'
 	@echo ' '
 	$(MAKE) --no-print-directory post-build
