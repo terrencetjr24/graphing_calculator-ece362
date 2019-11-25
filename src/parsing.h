@@ -53,7 +53,7 @@
 #define ALTERNATE_2     2
 
 //Stack value
-#define STACK_SIZE 21
+#define STACK_SIZE 40
 
 //Notes:
 /*We can try to get around the factorial issue (and just treat it specially) to allow for inputs like (2+(3!))
