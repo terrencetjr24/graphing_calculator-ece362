@@ -12,8 +12,8 @@ C_SRCS += \
 ../src/fifo.c \
 ../src/graphic.c \
 ../src/main.c \
-../src/notParsing.c \
 ../src/parsing.c \
+../src/parsingutility.c \
 ../src/syscalls.c \
 ../src/system_stm32f0xx.c 
 
@@ -24,8 +24,8 @@ OBJS += \
 ./src/graphic.o \
 ./src/main.o \
 ./src/micro_wait.o \
-./src/notParsing.o \
 ./src/parsing.o \
+./src/parsingutility.o \
 ./src/syscalls.o \
 ./src/system_stm32f0xx.o 
 
@@ -35,8 +35,8 @@ C_DEPS += \
 ./src/fifo.d \
 ./src/graphic.d \
 ./src/main.d \
-./src/notParsing.d \
 ./src/parsing.d \
+./src/parsingutility.d \
 ./src/syscalls.d \
 ./src/system_stm32f0xx.d 
 

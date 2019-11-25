@@ -419,8 +419,8 @@ int main(void)
 			GLCD_WriteString(line1);//write first half of expression
 			GLCD_GoTo(0,1);
 			GLCD_WriteString(line2);//write second half of expression
-			//GLCD_GoTo(0,3);
-			//GLCD_WriteString(line2);
+			GLCD_GoTo(0,3);
+			GLCD_WriteString(line2);
 		}
 		else if (error == 3){
 		    memset(expression,0,sizeof expression);
@@ -433,8 +433,8 @@ int main(void)
 		    GLCD_WriteString(line1);//write first half of expression
 		    GLCD_GoTo(0,1);
 		    GLCD_WriteString(line2);//write second half of expression
-		    //GLCD_GoTo(0,2);
-		    //GLCD_WriteString(line2);
+		    GLCD_GoTo(0,2);
+		    GLCD_WriteString(line2);
 		}
 
 	}

@@ -661,6 +661,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
     return 0;
 }
 
+<<<<<<< HEAD
 void graphFunction(uint8_t* stack) {
 
 	// Prompt for domain (at least max x - domain = (-x,x) )
