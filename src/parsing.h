@@ -82,7 +82,7 @@ struct calulationObj
 //initializing stack to -1 s
 void init_stack(int* stack);
 //allowing us to add "things" to stack (number, operations, functions) [returns a 1 for error, 0 for no error]
-int stackManipulation(int *, char input);
+int stackManipulation(int * stack, char* expression, int * index, char* result, char adding);
 //Called within above function to check the validity of an input [returns a 1 for error, 0 for no error]
 int stackCheck(int* stck);
 //used to calculate the result after enter is pressed (this is where everything is going on)

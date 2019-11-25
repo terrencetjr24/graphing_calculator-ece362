@@ -1,5 +1,6 @@
 #include <math.h> //For the calculations
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h> //For memset (clearing the struct)
 #include "parsing.h"
 
@@ -364,9 +365,11 @@ void init_stack(int* stack){
 //Return Value: will return 0 if everything went fine
 //                   return 1 if there's an error (and we need to beep at someone)
 //********************************************************************************
-int stackManipulation(int * stack, char* expression,char* result, char adding){
+int stackManipulation(int * stack, char* expression, int * index, char* result, char adding){
     float answer;
     int codeThatWeProbablyWontNeed;
+    int tempIndex = *index;
+    char tempString[6] = "      ";
     if((adding == 'A') | (adding == 'B')| (adding == 'C') | (adding == 'D')){
         switch(adding){
         case 'A':
@@ -383,14 +386,19 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
             break;
         case 'C':
             stackPointer = 0;
-            //clearingScreenFunctiion();
+            memset(expression,' ',47);
+            strcpy(expression,">");
+            *index = 1;
             break;
         case 'D':
-            if(stackCheck(stack))
+            if(stackCheck(stack)){
                 return 1;
+            }
             answer = calculations(stack);
             codeThatWeProbablyWontNeed = floatToString(answer, result);
 
+            GLCD_GoTo(0,5);
+            GLCD_WriteString("after calc process");//write first half of expression
             //outputFunction(answer);
             stackPointer =0;
             return 2;
@@ -399,46 +407,61 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
     }
     //Adding to the stack
     else{
-        if(alternateFunc == NORMAL){
+        if(tempIndex >= 42){}
+        else if(alternateFunc == NORMAL){
+            tempIndex++;
             switch(adding)
                 {
                 case '1': //
                     stack[stackPointer++] = ONE;
+                    strcpy(tempString,"1    ");
                     break;
                 case '2': //
                     stack[stackPointer++] = TWO;
+                    strcpy(tempString,"2    ");
                     break;
                 case '3': //
                     stack[stackPointer++] = THREE;
+                    strcpy(tempString,"3    ");
                     break;
                 case '4': //
                     stack[stackPointer++] = FOUR;
+                    strcpy(tempString,"4    ");
                     break;
                 case '5': //
                     stack[stackPointer++] = FIVE;
+                    strcpy(tempString,"5    ");
                     break;
                 case '6': //
                     stack[stackPointer++] = SIX;
+                    strcpy(tempString,"6    ");
                     break;
                 case '7': //
                     stack[stackPointer++] = SEVEN;
+                    strcpy(tempString,"7    ");
                     break;
                 case '8': //
                     stack[stackPointer++] = EIGHT;
+                    strcpy(tempString,"8    ");
                     break;
                 case '9': //
                     stack[stackPointer++] = NINE;
+                    strcpy(tempString,"9    ");
                     break;
                 case '*': //
                     //PROVISION TO DISALLOW DECIMALS NEXT TO EACH OTHER
-                    if(stack[stackPointer-1] != DECIMAL)
+                    if(stack[stackPointer-1] != DECIMAL){
                         stack[stackPointer++] = DECIMAL;
+                        strcpy(tempString,".    ");
+                    }
                     break;
                 case '0': //
                     stack[stackPointer++] = ZERO;
+                    strcpy(tempString,"0    ");
                     break;
                 case '#': //
                     stack[stackPointer++] = NEGATIVE_SIGN;
+                    strcpy(tempString,"-    ");
                     break;
             }
         }
@@ -448,18 +471,26 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
                     case '1': //
                         stack[stackPointer++] = PLUS;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"+    ");
+                        tempIndex++;
                         break;
                     case '2': //
                         stack[stackPointer++] = MINUS;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"-    ");
+                        tempIndex++;
                         break;
                     case '3': //
                         stack[stackPointer++] = DIVIDE;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"/    ");
+                        tempIndex++;
                         break;
                     case '4': //
                         stack[stackPointer++] = MULTIPLY;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"*    ");
+                        tempIndex++;
                         break;
                     case '5': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -470,30 +501,42 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
                     case '7': //
                         stack[stackPointer++] = E_TO_THE_X;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"e^X  ");
+                        tempIndex+=3;
                         break;
                     case '8': //
                         stack[stackPointer++] = NATURAL_LOG;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"ln(  ");
+                        tempIndex+=3;
                         break;
                     case '9': //
                         stack[stackPointer++] = LOG10;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"log( ");
+                        tempIndex+=4;
                         break;
                     case '*': //
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"(    ");
+                        tempIndex++;
                         break;
                     case '0': //
                         //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
                         if(stack[stackPointer-1] != CARROT)
                             stack[stackPointer++] = CARROT;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"^    ");
+                        tempIndex++;
                         break;
                     case '#': //
                         stack[stackPointer++] = CLOSE_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,")    ");
+                        tempIndex++;
                         break;
                     }
         }
@@ -504,41 +547,57 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
                         stack[stackPointer++] = SIN;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"sin( ");
+                        tempIndex+=4;
                         break;
                     case '2': //
                         stack[stackPointer++] = COS;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"cos( ");
+                        tempIndex+=4;
                         break;
                     case '3': //
                         stack[stackPointer++] = TAN;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"tan( ");
+                        tempIndex+=4;
                         break;
                     case '4': //
                         stack[stackPointer++] = ARCSIN;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"asin(");
+                        tempIndex+=5;
                         break;
                     case '5': //
                         stack[stackPointer++] = ARCCOS;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"acos(");
+                        tempIndex+=5;
                         break;
                     case '6': //
                         stack[stackPointer++] = ARCTAN;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"atan(");
+                        tempIndex+=5;
                         break;
                     case '7': //
                         stack[stackPointer++] = FACTORIAL;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"!(   ");
+                        tempIndex+=2;
                         break;
                     case '8': //
                         //THIS IS probably unnecessary here since it's only for graphing mode
                         stack[stackPointer++] = X_VARIABLE;
                         alternateFunc = NORMAL;
+                        strcpy(tempString,"X    ");
+                        tempIndex++;
                         break;
                     case '9': //
                         //HAVE WE DECIDED WHAT TO DO WITH THESE YET
@@ -572,6 +631,8 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
                         break;
                     }
         }
+        memcpy(&(expression[*index]),tempString,6);
+        *index = tempIndex;
     }
     return 0;
 }
@@ -676,7 +737,6 @@ float convertToNum(int* stack, int beg, int end){
             placesAfterDec--;
         }
     }
-
     //If the number is negative return the negative version
     if(stack[beg] == NEGATIVE_SIGN)
         return (-1*returnVal);
@@ -715,7 +775,6 @@ double degToRad(double input){
  *Otherwise we can just uncomment the "gcvt()" calls within the function below
  *(But I'm unsure if this will work, since it doesn't work in the simulator)
  */
-
 int floatToString(float input, char* output){
     int decimalPlaces = 100000;
     int digitsBeforeDec = 0;
@@ -745,17 +804,19 @@ int floatToString(float input, char* output){
     }
     //Error to deal with infinity or negative infinity (a cap of 2 billion, 147 million)
     else if(((int)intPartInput >= 2147000000) | ((int)intPartInput <= -2147000000)){
-        sprintf(output, "Error (too big or too small)");
+        sprintf(output, "Error, too big/small");
         return 0;
     }
     //A number is -0.####
     else if((input < 0) && (input > -1)){
+        //sprintf(output, "%d", input);
         //gcvt(input, 5, output);
         return 1;
     }
     //Every other number
     else{
-        //gcvt(input, beforeDecimal + 4, output);
+        //gcvt(input, digitsBeforeDec + 4, output);
+        //sprintf(output, "%d", input);
         return digitsBeforeDec+1; //Just in case there's a positve 0.## number
     }
 }
