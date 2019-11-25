@@ -392,7 +392,8 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
              * Need to find a way to incorprate checking for if the output is -0,
              * or if the output is too big (maybe this isn't an issue tho)
              */
-            sprintf(result, "%f", answer);
+            //if((answer>2147000000) | ((answer<-2147000000)))
+                sprintf(result, "%0.5f", answer);
 
             stackPointer =0;
             return 2;
