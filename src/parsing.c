@@ -1,15 +1,16 @@
 #include <math.h> //For the calculations
-#include <stdlib.h>
+#include <stdlib.h> // can we remove any of these libraries
+#include <stdio.h>
 #include <string.h> //For memset (clearing the struct)
 #include "parsing.h"
+#include <stdint.h>
 
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
 
 //Parsing global variables
-int alternateFunc = NORMAL;
-int stackPointer = 0;
-
+uint8_t alternateFunc = NORMAL;
+uint8_t stackPointer = 0;
 
 /* Note:
  * Will be creating 2 different stack within these sets of functions:
@@ -21,11 +22,11 @@ int stackPointer = 0;
  *
  */
 
-float calculations(int* stack){
+float calculations(uint8_t* stack){
     float answer = 0;
-    int workingPointer = 0;
-    int secondaryPointer;
-    int calcStackPointer = 0;
+    uint8_t workingPointer = 0;
+    uint8_t secondaryPointer;
+    uint8_t calcStackPointer = 0;
     struct calulationObj calcStack[STACK_SIZE];
     memset(&calcStack, 0, sizeof(calcStack));
     //The stack pointer will be the size of objects in the stack, and the next available location
@@ -347,14 +348,6 @@ float calculations(int* stack){
     return answer;
 }
 
-void init_stack(int* stack){
-    int i;
-    for(i =0; i< STACK_SIZE; i++){
-        stack[i] = INIT_VALUE;
-    }
-    return;
-}
-
 //********************************************************************************
 //Note: there are open parenthesis added at the end of certain functions
 //This is the only function that needs to be called by the button pressing function
@@ -364,9 +357,10 @@ void init_stack(int* stack){
 //Return Value: will return 0 if everything went fine
 //                   return 1 if there's an error (and we need to beep at someone)
 //********************************************************************************
-int stackManipulation(int * stack, char* expression,char* result, char adding){
+uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding){
     float answer;
-    int codeThatWeProbablyWontNeed;
+    int tempIndex = *index;
+    char tempString[6] = "      ";
     if((adding == 'A') | (adding == 'B')| (adding == 'C') | (adding == 'D')){
         switch(adding){
         case 'A':
@@ -383,239 +377,311 @@ int stackManipulation(int * stack, char* expression,char* result, char adding){
             break;
         case 'C':
             stackPointer = 0;
-            //clearingScreenFunctiion();
+            *index = 1;
+            //A return value of 3 will indicate a clear
+            return 3;
             break;
         case 'D':
-            if(stackCheck(stack))
+            if(stackPointer!= 0){
+            if(stackCheck(stack, stackPointer)){
+                stackPointer =0;
                 return 1;
+            }
             answer = calculations(stack);
-            codeThatWeProbablyWontNeed = floatToString(answer, result);
+            GLCD_GoTo(0,6);
+            GLCD_WriteString("testing");
 
-            //outputFunction(answer);
+            // This is from Stack overflow, should be put in another function
+
+            char *tmpSign = (answer < 0) ? "-" : "";
+            float tmpVal = (answer < 0) ? -answer : answer;
+
+            int tmpInt1 = tmpVal;                  // Get the integer (678).
+            float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
+            int tmpInt2 = trunc(tmpFrac * 1000);  // Turn into integer (123).
+
+            // Print as parts, note that you need 0-padding for fractional bit.
+            sprintf (result, "%s%d.%03d", tmpSign, tmpInt1, tmpInt2);
+
+            // End of function
+            /********************************************************
+             * Need to find a way to incorporate checking for if the output is -0,
+             * or if the output is too big (maybe this isn't an issue tho)
+             */
+            //sprintf(result, "%f", answer);
+
             stackPointer =0;
             return 2;
+            }
             break;
         }
     }
     //Adding to the stack
     else{
-        if(alternateFunc == NORMAL){
+        if(tempIndex >= 42){}
+        else{
+            tempIndex++;
             switch(adding)
                 {
                 case '1': //
-                    stack[stackPointer++] = ONE;
-                    break;
-                case '2': //
-                    stack[stackPointer++] = TWO;
-                    break;
-                case '3': //
-                    stack[stackPointer++] = THREE;
-                    break;
-                case '4': //
-                    stack[stackPointer++] = FOUR;
-                    break;
-                case '5': //
-                    stack[stackPointer++] = FIVE;
-                    break;
-                case '6': //
-                    stack[stackPointer++] = SIX;
-                    break;
-                case '7': //
-                    stack[stackPointer++] = SEVEN;
-                    break;
-                case '8': //
-                    stack[stackPointer++] = EIGHT;
-                    break;
-                case '9': //
-                    stack[stackPointer++] = NINE;
-                    break;
-                case '*': //
-                    //PROVISION TO DISALLOW DECIMALS NEXT TO EACH OTHER
-                    if(stack[stackPointer-1] != DECIMAL)
-                        stack[stackPointer++] = DECIMAL;
-                    break;
-                case '0': //
-                    stack[stackPointer++] = ZERO;
-                    break;
-                case '#': //
-                    stack[stackPointer++] = NEGATIVE_SIGN;
-                    break;
-            }
-        }
-        else if (alternateFunc == ALTERNATE_1){
-            switch(adding)
-                    {
-                    case '1': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = ONE;
+                        strcpy(tempString,"1    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = PLUS;
                         alternateFunc = NORMAL;
-                        break;
-                    case '2': //
+                        strcpy(tempString,"+    ");
+                    }
+                    else {
+                        stack[stackPointer++] = SIN;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"sin( ");
+                        tempIndex+=3;
+                    }
+                    break;
+                case '2': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = TWO;
+                        strcpy(tempString,"2    ");
+                    }
+                    else if (alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = MINUS;
                         alternateFunc = NORMAL;
-                        break;
-                    case '3': //
+                        strcpy(tempString,"-    ");
+                    }
+                    else {
+                        stack[stackPointer++] = COS;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"cos( ");
+                        tempIndex+=3;
+                    }
+                    break;
+                case '3': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = THREE;
+                        strcpy(tempString,"3    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = DIVIDE;
                         alternateFunc = NORMAL;
-                        break;
-                    case '4': //
+                        strcpy(tempString,"/    ");
+                    }
+                    else{
+                        stack[stackPointer++] = TAN;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"tan( ");
+                        tempIndex+=3;
+                    }
+                    break;
+                case '4': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = FOUR;
+                        strcpy(tempString,"4    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = MULTIPLY;
                         alternateFunc = NORMAL;
-                        break;
-                    case '5': //
-                        //HAVE WE DECIDED WHAT TO DO WITH THESE YET
-                        break;
-                    case '6': //
-                        //HAVE WE DECIDED WHAT TO DO WITH THESE YET
-                        break;
-                    case '7': //
+                        strcpy(tempString,"*    ");
+                    }
+                    else {
+                        stack[stackPointer++] = ARCSIN;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"asin(");
+                        tempIndex+=4;
+                    }
+                    break;
+                case '5': //
+                    if(alternateFunc == NORMAL){
+                    stack[stackPointer++] = FIVE;
+                    strcpy(tempString,"5    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
+                        asm("nop");
+                        tempIndex--;
+                        alternateFunc = NORMAL;
+                    }
+                    else{
+                        stack[stackPointer++] = ARCCOS;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"acos(");
+                        tempIndex+=4;
+                    }
+                    break;
+                case '6': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = SIX;
+                        strcpy(tempString,"6    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
+                        asm("nop");
+                        tempIndex--;
+                        alternateFunc = NORMAL;
+                    }
+                    else{
+                        stack[stackPointer++] = ARCTAN;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"atan(");
+                        tempIndex+=4;
+                    }
+                    break;
+                case '7': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = SEVEN;
+                        strcpy(tempString,"7    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = E_TO_THE_X;
                         alternateFunc = NORMAL;
-                        break;
-                    case '8': //
+                        strcpy(tempString,"e^X  ");
+                        tempIndex+=2;
+                    }
+                    else{
+                        stack[stackPointer++] = FACTORIAL;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"!(   ");
+                        tempIndex+=1;
+                    }
+                    break;
+                case '8': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = EIGHT;
+                        strcpy(tempString,"8    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = NATURAL_LOG;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
-                        break;
-                    case '9': //
+                        strcpy(tempString,"ln(  ");
+                        tempIndex+=2;
+                    }
+                    else{
+                        //THIS IS probably unnecessary here since it's only for graphing mode
+                        stack[stackPointer++] = X_VARIABLE;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,"X    ");
+                    }
+                    break;
+                case '9': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = NINE;
+                        strcpy(tempString,"9    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = LOG10;
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
-                        break;
-                    case '*': //
+                        strcpy(tempString,"log( ");
+                        tempIndex+=3;
+                    }
+                    else{
+                        asm("nop");
+                        tempIndex--;
+                        alternateFunc = NORMAL;
+                    }
+                    break;
+                case '*': //
+                    if(alternateFunc == NORMAL){
+                        //PROVISION TO DISALLOW DECIMALS NEXT TO EACH OTHER
+                        if(stack[stackPointer-1] != DECIMAL){
+                            stack[stackPointer++] = DECIMAL;
+                            strcpy(tempString,".    ");
+                        }
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = OPEN_PAREN;
                         alternateFunc = NORMAL;
-                        break;
-                    case '0': //
+                        strcpy(tempString,"(    ");
+                    }
+                    else{
+                        stack[stackPointer] = GRAPH;
+                        //calling the graphing function and resetting stack pointer to zero
+
+                        stackPointer = 0;
+                        //graphFunction(stack);
+                        alternateFunc = NORMAL;
+                    }
+                    break;
+                case '0': //
+                    if(alternateFunc == NORMAL){
+                        stack[stackPointer++] = ZERO;
+                        strcpy(tempString,"0    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
                         //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
                         if(stack[stackPointer-1] != CARROT)
                             stack[stackPointer++] = CARROT;
                         alternateFunc = NORMAL;
-                        break;
-                    case '#': //
-                        stack[stackPointer++] = CLOSE_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
+                        strcpy(tempString,"^    ");
                     }
-        }
-        else{
-            switch(adding)
-                    {
-                    case '1': //
-                        stack[stackPointer++] = SIN;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '2': //
-                        stack[stackPointer++] = COS;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '3': //
-                        stack[stackPointer++] = TAN;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '4': //
-                        stack[stackPointer++] = ARCSIN;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '5': //
-                        stack[stackPointer++] = ARCCOS;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '6': //
-                        stack[stackPointer++] = ARCTAN;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '7': //
-                        stack[stackPointer++] = FACTORIAL;
-                        stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '8': //
-                        //THIS IS probably unnecessary here since it's only for graphing mode
-                        stack[stackPointer++] = X_VARIABLE;
-                        alternateFunc = NORMAL;
-                        break;
-                    case '9': //
-                        //HAVE WE DECIDED WHAT TO DO WITH THESE YET
-                        break;
-                    case '*': //
-                        stack[stackPointer] = GRAPH;
-                        //calling the graphing function and resetting stack pointer to zero
-                        stackPointer = 0;
-                        //graphing();
-                        alternateFunc = NORMAL;
-                        break;
-                    case '0': //
+                    else{
                         //Will treat these specially within the stackCheck function (also DON'T WANT TO
                         stack[stackPointer] = DEG_TO_RAD;
-                        if(stackCheck(stack))
+                        if(stackCheck(stack, stackPointer))
                             return 1;
                         answer = degToRad(convertToNum(stack, 0, stackPointer-1));
                         //outputFunc(answer);
                         stackPointer = 0;
                         alternateFunc = NORMAL;
-                        break;
-                    case '#': //
+                    }
+                    break;
+                case '#': //
+                    if(alternateFunc == NORMAL){
+                    stack[stackPointer++] = NEGATIVE_SIGN;
+                    strcpy(tempString,"-    ");
+                    }
+                    else if(alternateFunc == ALTERNATE_1){
+                        stack[stackPointer++] = CLOSE_PAREN;
+                        alternateFunc = NORMAL;
+                        strcpy(tempString,")    ");
+                    }
+                    else{
                         //Will treat these specially within the stackCheck function
                         stack[stackPointer] = RAD_TO_DEG;
-                        if(stackCheck(stack))
+                        if(stackCheck(stack, stackPointer))
                             return 1;
                         answer = radToDeg(convertToNum(stack, 0, stackPointer-1));
                         //outputFunc(answer);
                         stackPointer = 0;
                         alternateFunc = NORMAL;
-                        break;
                     }
+                    break;
+            }
         }
+        memcpy(&(expression[*index]),tempString,6);
+        *index = tempIndex;
     }
     return 0;
 }
 
-//Checking that:
-//Open parens == closing parens
-//...
-int stackCheck(int* stack){
-    int openParens = 0;
-    int closedParens = 0;
-    int i;
+void graphFunction(uint8_t* stack) {
 
-    //special case for if the last thing pressed was a RAD/DEG conversion
-    if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
-        for(i=0; i<stackPointer; i++){
-            if(stack[i] > 11) //if there's anything other than numbers, decimals, or negative sin BEFORE the conversion operation
-                return 1;
-        }
-    }
-    else{
-        //Checking for different cases here
-        for(i=0; i<=stackPointer; i++){
-            if(stack[i] == OPEN_PAREN)
-                openParens++;
-            else if(stack[i] == CLOSE_PAREN)
-                closedParens++;
-        }
-    }
+	// Prompt for domain (at least max x - domain = (-x,x) )
 
-    if(openParens != closedParens)
-        return 1;
-    return 0;
+    // graphing function should do the same as enter - basically,
+    // loop from 0 to 127 and call eval function with X replaced by pixel #
+    // need to prompt for domain first.
+
+	//answer = calculations(stack);
+
 }
 
 //**********************************************
 //This function works well enough, but it also produces slight rounding errors
 //that may throw some calculations off
 //**********************************************
-float convertToNum(int* stack, int beg, int end){
+float convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
     //Note:
     //If all errors in input were taken care of carefully, and the proper indices
     //are given, all the value in this range should be numbers.
     //And all the numbers are "DEFINED" with their actual number value
-
     int decimal = -1;
     int placesBeforeDec = 0;
     int placesAfterDec = 0;
@@ -623,7 +689,7 @@ float convertToNum(int* stack, int beg, int end){
     int workingIndex;
 
     if(beg == end){
-        printf("The beg equals the ends\n");
+        //printf("The beg equals the ends\n"); //just for simulation
         return returnVal;
     }
     //returning it to zero since it wasn't needed earlier
@@ -676,22 +742,11 @@ float convertToNum(int* stack, int beg, int end){
             placesAfterDec--;
         }
     }
-
     //If the number is negative return the negative version
     if(stack[beg] == NEGATIVE_SIGN)
         return (-1*returnVal);
     else
         return returnVal;
-}
-
-double factorial(double input){
-    double output = 1;
-    int limit = (int)input;
-    int i;
-    for(i=1; i<= limit; i++)
-        output *= i;
-
-    return output;
 }
 
 double radToDeg(double input){
@@ -704,58 +759,48 @@ double degToRad(double input){
   return output;
 }
 
-//In this configuration would need a line like this in the output call
-/*
- * int code = floatToString(dummy, output);
-    if(code == 1)
-        gcvt(dummy, 5, output);
-    else if (code >1)
-        gcvt(dummy, code + 4, output);
- *
- *Otherwise we can just uncomment the "gcvt()" calls within the function below
- *(But I'm unsure if this will work, since it doesn't work in the simulator)
- */
+double factorial(double input){
+    double output = 1;
+    int limit = (int)input;
+    int i;
+    for(i=1; i<= limit; i++)
+        output *= i;
 
-int floatToString(float input, char* output){
-    int decimalPlaces = 100000;
-    int digitsBeforeDec = 0;
-    double intPartInput = 0;
-    double decPartInput = 0;
-    int holder;
+    return output;
+}
 
-    //I forget what this is doing, but I know it is very much essential
-    decPartInput = fabs(decimalPlaces * (modf(input, &intPartInput)));
-    intPartInput = fabs(intPartInput);
-    if(decPartInput == decimalPlaces){
-        decPartInput = 0;
-        intPartInput += 1;
-    }
-    //Figuring out the number of digits before decimal point
-    holder = (int)intPartInput;
-    while(holder){
-        digitsBeforeDec++;
-        holder = holder /10;
-    }
-    //printf("The digits before decimal: %d\n", digitsBeforeDec);
+//Checking that:
+//Open parens == closing parens
+//...
+uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
+    uint8_t openParens = 0;
+    uint8_t closedParens = 0;
+    int i;
 
-    //Zero case to deal with "negative" zero
-    if(((int)intPartInput == 0) && ((int)decPartInput == 0)){
-        sprintf(output,"0.0");
-        return 0;
+    //special case for if the last thing pressed was a RAD/DEG conversion
+    if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
+        for(i=0; i<stackPointer; i++){
+            if(stack[i] > 11) //if there's anything other than numbers, decimals, or negative sin BEFORE the conversion operation
+                return 1;
+        }
     }
-    //Error to deal with infinity or negative infinity (a cap of 2 billion, 147 million)
-    else if(((int)intPartInput >= 2147000000) | ((int)intPartInput <= -2147000000)){
-        sprintf(output, "Error (too big or too small)");
-        return 0;
-    }
-    //A number is -0.####
-    else if((input < 0) && (input > -1)){
-        //gcvt(input, 5, output);
-        return 1;
-    }
-    //Every other number
     else{
-        //gcvt(input, beforeDecimal + 4, output);
-        return digitsBeforeDec+1; //Just in case there's a positve 0.## number
+        //Checking for different cases here
+        for(i=0; i<=stackPointer; i++){
+            if(stack[i] == OPEN_PAREN)
+                openParens++;
+            else if(stack[i] == CLOSE_PAREN)
+                closedParens++;
+        }
     }
+
+    if(openParens != closedParens)
+        return 1;
+
+    // Return error if last value in stack is an operation
+
+    // Return error if multiple operations in a row
+
+
+    return 0;
 }

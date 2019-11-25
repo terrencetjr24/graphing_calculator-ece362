@@ -69,28 +69,24 @@
 struct calulationObj
 {
    float number;
-   int code;
-   char numOrCode;  //If the value is a 0 it's a number,
+   uint8_t code;
+   uint8_t numOrCode;  //If the value is a 0 it's a number,
                     //if it's greater than 0 that's it's precedence (higher == higher precedence)
                     //Also functions will be DENOTED W/ A six (func. == 6)
-   char dead;       //This will be used in the output queue during calculations
+   uint8_t dead;       //This will be used in the output queue during calculations
                     //1 == DEAD ; 0 == ALIVE
 };
 
 
 //Function declarations
-//initializing stack to -1 s
-void init_stack(int* stack);
 //allowing us to add "things" to stack (number, operations, functions) [returns a 1 for error, 0 for no error]
-int stackManipulation(int *, char input);
+uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding);
 //Called within above function to check the validity of an input [returns a 1 for error, 0 for no error]
-int stackCheck(int* stck);
+uint8_t stackCheck(uint8_t* stack, uint8_t pointer);
 //used to calculate the result after enter is pressed (this is where everything is going on)
-float calculations(int* stack);
+float calculations(uint8_t* stack);
 //Used for converting a part of the stack to a number
-float convertToNum(int* stack, int firstIndex, int lastIndex);
-//Converting from a float to a character string
-int floatToString(float input, char* outputString);
+float convertToNum(uint8_t* stack, uint8_t firstIndex, uint8_t lastIndex);
 
 double factorial(double);
 double radToDeg(double input);
