@@ -10,6 +10,7 @@
 int alternateFunc = NORMAL;
 int stackPointer = 0;
 
+
 /* Note:
  * Will be creating 2 different stack within these sets of functions:
  * one for holding the codes from all the inputs (an int stack)
@@ -67,7 +68,7 @@ float calculations(int* stack){
     }
     //Just for checking the calcStack (simulation)
     //printf("The calc stack: \n");
-    printCalcStack(calcStack, calcStackPointer);
+    //printCalcStack(calcStack, calcStackPointer);
 
     //THE ACTUAL ALGORITHM
 
@@ -123,7 +124,7 @@ float calculations(int* stack){
     }
     //printf("The outputQueue size: %d\n", indexOQ);
     //printf("The output queue: \n");
-    printCalcStack(outputQueue, indexOQ);
+    //printCalcStack(outputQueue, indexOQ);
 
     workingPointer = 0;
     secondaryPointer = 0;
@@ -363,8 +364,9 @@ void init_stack(int* stack){
 //Return Value: will return 0 if everything went fine
 //                   return 1 if there's an error (and we need to beep at someone)
 //********************************************************************************
-int stackManipulation(int * stack, char adding){
+int stackManipulation(int * stack, char* expression,char* result, char adding){
     float answer;
+    int codeThatWeProbablyWontNeed;
     if((adding == 'A') | (adding == 'B')| (adding == 'C') | (adding == 'D')){
         switch(adding){
         case 'A':
@@ -387,8 +389,11 @@ int stackManipulation(int * stack, char adding){
             if(stackCheck(stack))
                 return 1;
             answer = calculations(stack);
+            codeThatWeProbablyWontNeed = floatToString(answer, result);
+
             //outputFunction(answer);
             stackPointer =0;
+            return 2;
             break;
         }
     }
@@ -754,92 +759,3 @@ int floatToString(float input, char* output){
         return digitsBeforeDec+1; //Just in case there's a positve 0.## number
     }
 }
-
-/*
-void floatToString(float input, char* output){
-    int outIndex = 0;
-    int decimalPlaces = 100000;
-    float dummy;
-    int digitsBeforeDec = 0;
-    int digitsAfterDec = 0;
-    int holder;
-
-    double intPartInput = 0;
-    double decPartInput = 0;
-    int inputZeroPadding = -1;
-    //I forget what this is doing, but I know it is very much essential
-    decPartInput = fabs(decimalPlaces * (modf(input, &intPartInput)));
-    intPartInput = fabs(intPartInput);
-    if(decPartInput == decimalPlaces){
-        decPartInput = 0;
-        intPartInput += 1;
-    }
-    //Figuring out the number of zeros to pad after the decimal
-    dummy = decPartInput;
-    while((dummy < decimalPlaces) && (decPartInput !=0)){
-        dummy *=10;
-        inputZeroPadding++;
-    }
-    //Figuring out the number of digits before and after decimal point
-        holder = (int)intPartInput;
-        while(holder){
-            digitsBeforeDec++;
-            holder = holder /10;
-        }
-        holder = (int)decPartInput;
-        while(holder){
-            //This is to make sure we don't add unnecessary zeros at the end
-            if((holder) != ((holder/10) * 10))
-                digitsAfterDec++;
-            holder = holder / 10;
-        }
-        printf("The digits before decimal: %d\nAfter the decimal: %d", digitsBeforeDec, digitsAfterDec);
-
-    //Zero case to deal with "negative" zero
-    if(((int)intPartInput == 0) && ((int)decPartInput == 0)){
-        sprintf(output,"0.0");
-        gcvt(0.0, 2, output);
-    }
-    //Error to deal with infinity or negative infinity (a cap of 2 billion, 147 million)
-    else if(((int)intPartInput >= 2147000000) | ((int)intPartInput <= -2147000000)){
-        sprintf(output, "Error (too big or too small)");
-    }
-    else if((input < 0) && (input > -1)){
-        output[outIndex++] = '-';
-        output[outIndex++] = '0';
-        output[outIndex++] = '.';
-        //Printing all the padding values
-        while(inputZeroPadding-- > 0){
-            output[outIndex++] = '0';
-        }
-        //Printing all the values after the decimal
-        while(digitsAfterDec){
-            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsAfterDec));
-            digitsAfterDec--;
-        }
-        output[outIndex] = '\0';
-        gcvt(input, 5, output);
-    }
-    else{
-        //Printing a negatie sign if the value is negative
-        if(input < 0)
-            output[outIndex++] = '-';
-        //Printing all the values before the decimal
-        while(digitsBeforeDec){
-            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsBeforeDec));
-            digitsBeforeDec--;
-        }
-        output[outIndex++] = '.';
-        //Printing out the padding zeros
-        while((inputZeroPadding--) && (decPartInput !=0))
-            output[outIndex++] = '0';
-        while(digitsAfterDec){
-            output[outIndex++] = '0' + (int)intPartInput / (pow(10, digitsAfterDec));
-            digitsAfterDec--;
-        }
-        output[outIndex] = '\0';
-        gcvt(dummy, beforeDecimal + 5, output);
-    }
-    return;
-}
-*/
