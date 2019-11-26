@@ -531,7 +531,7 @@ float calculations(uint8_t* stack){
     //And this won't matter if we're not graphing
     if(graphing){
         //call the graphing function and pass through the entire array
-        //graphingFunc(outputArray);
+        //graphingFunc(inputArray, outputArray, domain);
     }
     
     answer = outputQueue[indexOQ-1].number;
