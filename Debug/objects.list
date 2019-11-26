@@ -22,8 +22,6 @@
 "Utilities/stm32f0_discovery.o"
 "src/KS0108-STM32.o"
 "src/KS0108.o"
-"src/fifo.o"
-"src/graphic.o"
 "src/main.o"
 "src/micro_wait.o"
 "src/parsing.o"

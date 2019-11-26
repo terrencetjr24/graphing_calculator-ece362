@@ -9,8 +9,6 @@
 #include "parsing.h"
 #include <stdint.h>
 
-#define PI 3.14159265
-
 #define GPIO_ODR_D0                 ((uint32_t)0x00000001)
 #define GPIO_ODR_D1                 ((uint32_t)0x00000002)
 #define GPIO_ODR_D2                 ((uint32_t)0x00000004)
@@ -25,7 +23,7 @@
 #define GPIO_ODR_RS                 ((uint32_t)0x00000800)
 #define GPIO_ODR_EN                 ((uint32_t)0x00001000)
 
-void micro_wait(unsigned int);
+//void micro_wait(unsigned int); //added to parsing.h
 
 // Start of keypad setup
 int col = 0;
@@ -328,9 +326,10 @@ int main(void)
     //char error_mess[STACK_SIZE / 2 + 1] = "YOU IDIOT! Press D";
     //Memory reduction
     uint8_t error = 0;
+    uint8_t alternateFunc = NORMAL;
 
     init_hardware();
-
+/*
     GLCD_GoTo(0,0);
     GLCD_WriteString("testing");
     micro_wait(1000000);
@@ -342,7 +341,7 @@ int main(void)
     micro_wait(1000000);
     GLCD_ClearScreen();
     micro_wait(1000000);
-
+*/
 
     char line1[21];
     memcpy(line1,expression,20);
@@ -350,14 +349,25 @@ int main(void)
     char line2[21];
     memcpy(line2,&(expression[20]),20);
     line2[20] = '\0';
-    char empty[21] = "                      ";
+    char clear[21] = "                     ";
 
     GLCD_GoTo(0,0);
     GLCD_WriteString(line1);//write first half of expression
+    GLCD_GoTo(0,3);
+    GLCD_WriteString("Alt Func. Status: NUM");
+    GLCD_GoTo(0,4);
+    GLCD_WriteString("0-9 = Numbers");
+    GLCD_GoTo(0,5);
+    GLCD_WriteString("* = '.' | # = '-' ");
+    GLCD_GoTo(0,6);
+    GLCD_WriteString("Locked: A=AF1 | B=AF2");
+    GLCD_GoTo(0,7);
+    GLCD_WriteString("       C=CLR| D=ENTER");
+
     while (1)
     {
         char key = get_char_key();
-        error = stackManipulation(codestack, expression, &index, result, key);
+        error = stackManipulation(codestack, expression, &index, result, key, &alternateFunc);
 
         memcpy(line1,expression,20);
         line1[20] = '\0';
@@ -369,10 +379,14 @@ int main(void)
         GLCD_GoTo(0,1);
         GLCD_WriteString(line2);//write second half of expression
 
+
         if (error == 1)
         {
+            //insert beeping sound here
             GLCD_GoTo(0,2);
-            GLCD_WriteString("ERROR, PRESS ENTER!!!");//write first half of expression
+            GLCD_WriteString(result);//write output
+            GLCD_GoTo(0,3);
+            GLCD_WriteString("PRESS ENTER!!!");//write first half of expression
             // beep begins
             //print out the error message
             while (get_char_key() != 'D');
@@ -404,8 +418,31 @@ int main(void)
             GLCD_WriteString(line2);//write output
 
             GLCD_GoTo(0,3);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,4);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,5);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,6);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,7);
+            GLCD_WriteString(clear);
+
+            GLCD_GoTo(0,4);
             GLCD_WriteString("Press Enter");//write first half of expression
+            GLCD_GoTo(0,5);
+            GLCD_WriteString("to continue");
+
             while (get_char_key() != 'D');
+
+            GLCD_GoTo(0,4);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,5);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,6);
+            GLCD_WriteString(clear);
+            GLCD_GoTo(0,7);
+            GLCD_WriteString(clear);
             //Formatting the previous answer
             strcpy(line2, "Prev Ans: ");
             strcat(line2, result);
@@ -441,6 +478,59 @@ int main(void)
             GLCD_WriteString(line2);//write second half of expression
             //GLCD_GoTo(0,2);
             //GLCD_WriteString(line2);
+        }
+
+        GLCD_GoTo(0,3);
+        GLCD_WriteString(clear);
+        GLCD_GoTo(0,4);
+        GLCD_WriteString(clear);
+        GLCD_GoTo(0,5);
+        GLCD_WriteString(clear);
+        GLCD_GoTo(0,6);
+        GLCD_WriteString(clear);
+        GLCD_GoTo(0,7);
+        GLCD_WriteString(clear);
+
+        if(alternateFunc == NORMAL){
+
+            GLCD_GoTo(0,3);
+            GLCD_WriteString("Alt Func. Status: NUM");
+
+            GLCD_GoTo(0,4);
+            GLCD_WriteString("0-9 = Numbers");
+            GLCD_GoTo(0,5);
+            GLCD_WriteString("* = '.' | # = '-' ");
+            GLCD_GoTo(0,6);
+            GLCD_WriteString("Locked: A=AF1 | B=AF2");
+            GLCD_GoTo(0,7);
+            GLCD_WriteString("       C=CLR| D=ENTER");
+        }
+        else if(alternateFunc == ALTERNATE_1){
+            GLCD_GoTo(0,3);
+            GLCD_WriteString("Alt Func. Status: AF1");
+
+            GLCD_GoTo(0,4);
+            GLCD_WriteString("1='+' | 2='-' | 3='/'");
+            GLCD_GoTo(0,5);
+            GLCD_WriteString("4='*' | 5=' ' | 6=' '");
+            GLCD_GoTo(0,6);
+            GLCD_WriteString("7= e^ | 8=ln( | 9=log");
+            GLCD_GoTo(0,7);
+            GLCD_WriteString("*='(' | 0='^' | #=')'");
+
+        }
+        else{
+            GLCD_GoTo(0,3);
+            GLCD_WriteString("Alt Func. Status: AF2");
+
+            GLCD_GoTo(0,4);
+            GLCD_WriteString("1=sin | 2=cos |3=tan");
+            GLCD_GoTo(0,5);
+            GLCD_WriteString("4=asin| 5=acos|6=atan");
+            GLCD_GoTo(0,6);
+            GLCD_WriteString("7= !( | 8='X' |9= PI");
+            GLCD_GoTo(0,7);
+            GLCD_WriteString("*=GRAPH|0=DtoR|#=RtoD");
         }
 
     }

@@ -8,11 +8,12 @@
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
 
-
+/*
 //**********************************************
 //This function works well enough, but it also produces slight rounding errors
 //that may throw some calculations off
 //**********************************************
+
 float convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
     //Note:
     //If all errors in input were taken care of carefully, and the proper indices
@@ -134,3 +135,4 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
         return 1;
     return 0;
 }
+*/

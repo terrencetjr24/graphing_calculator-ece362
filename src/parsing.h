@@ -47,6 +47,9 @@
 #define DEG_TO_RAD      31
 #define RAD_TO_DEG      32
 
+//Added late
+#define PI 33
+
 //STATUS CODE
 #define NORMAL          0
 #define ALTERNATE_1     1
@@ -80,7 +83,7 @@ struct calulationObj
 
 //Function declarations
 //allowing us to add "things" to stack (number, operations, functions) [returns a 1 for error, 0 for no error]
-uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding);
+uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding, uint8_t* altFunc);
 //Called within above function to check the validity of an input [returns a 1 for error, 0 for no error]
 uint8_t stackCheck(uint8_t* stack, uint8_t pointer);
 //used to calculate the result after enter is pressed (this is where everything is going on)
@@ -91,5 +94,7 @@ float convertToNum(uint8_t* stack, uint8_t firstIndex, uint8_t lastIndex);
 double factorial(double);
 double radToDeg(double input);
 double degToRad(double input);
+
+void micro_wait(unsigned int);
 
 #endif /* PARSING_H_ */

@@ -9,7 +9,6 @@
 #include "stm32f0_discovery.h"
 
 //Parsing global variables
-uint8_t alternateFunc = NORMAL;
 uint8_t stackPointer = 0;
 
 /* Note:
@@ -24,26 +23,47 @@ uint8_t stackPointer = 0;
 
 float calculations(uint8_t* stack){
     float answer = 0;
+    uint8_t graphing = 0;
     uint8_t workingPointer = 0;
     uint8_t secondaryPointer;
     uint8_t calcStackPointer = 0;
     struct calulationObj calcStack[STACK_SIZE];
     memset(&calcStack, 0, sizeof(calcStack));
+
+    //graphing variables
+    uint8_t xcount = 0;
+    uint8_t xIndicies[STACK_SIZE/4];
+    uint16_t domainInput = 0;
+    uint8_t i;
+    float outputArray[128];
+    float inputArray[128];
+    memset (outputArray, 0, sizeof outputArray);
+    memset (inputArray, 0, sizeof inputArray);
+    memset(xIndicies, -1, sizeof xIndicies);
+    char dummy[100];
+
     //The stack pointer will be the size of objects in the stack, and the next available location
     //A loop for creating the calcStack
     while(workingPointer != stackPointer){
         //If the value is a digit
-        if((stack[workingPointer] <= NEGATIVE_SIGN) && (stack[workingPointer] > -1)){
-            secondaryPointer = workingPointer;
-            while((stack[secondaryPointer] < 12) && (secondaryPointer < stackPointer))
-                secondaryPointer++;
-            //Just for simulating
-            //printf("beg val: %d , end val: %d\n", workingPointer, secondaryPointer-1);
-            calcStack[calcStackPointer].number = convertToNum(stack, workingPointer, secondaryPointer-1);
-            //Just for simulating
-            //printf("The number 'read': %f\n", calcStack[calcStackPointer].number);
-            calcStack[calcStackPointer++].numOrCode = 0;
-            workingPointer = secondaryPointer-1;
+        if(((stack[workingPointer] <= NEGATIVE_SIGN) && (stack[workingPointer] > -1)) | (stack[workingPointer] == PI) | (stack[workingPointer] == X_VARIABLE)){
+            if(stack[workingPointer] == PI){
+                calcStack[calcStackPointer].number = 3.14159;
+                calcStack[calcStackPointer++].numOrCode = 0;
+            }
+            else if(stack[workingPointer] == X_VARIABLE){
+                calcStack[calcStackPointer].number = -1;
+                calcStack[calcStackPointer].numOrCode = 0;
+                calcStack[calcStackPointer++].code = stack[workingPointer];
+            }
+            else{
+                secondaryPointer = workingPointer;
+                while((stack[secondaryPointer] < 12) && (secondaryPointer < stackPointer))
+                    secondaryPointer++;
+                calcStack[calcStackPointer].number = convertToNum(stack, workingPointer, secondaryPointer-1);
+                calcStack[calcStackPointer++].numOrCode = 0;
+                workingPointer = secondaryPointer-1;
+            }
         }
         else{
             calcStack[calcStackPointer].code = stack[workingPointer];
@@ -107,7 +127,7 @@ float calculations(uint8_t* stack){
         else{
             //while (there's a function on top of stack, or operator on stack with higher precedence,
             // or the operator at top of stack has equal precedence and is left associative [assumption: carrots are the only right associative operator that we have])
-            //AND the operator at the top of the stack is NOT a left paranthesis
+            //AND the operator at the top of the stack is NOT a left parenthesis
             //Pop operators from the operator stack to the output queue
             while((indexOS > 0) && (operatorStack[indexOS-1].numOrCode != 4) && ( (operatorStack[indexOS-1].numOrCode == 5) | (operatorStack[indexOS-1].numOrCode > calcStack[workingPointer].numOrCode) | ((operatorStack[indexOS-1].numOrCode == calcStack[workingPointer].numOrCode) && (operatorStack[indexOS-1].code != CARROT) )) ){
                 memcpy(&(outputQueue[indexOQ++]), &(operatorStack[indexOS-1]), sizeof(struct calulationObj) );
@@ -123,9 +143,131 @@ float calculations(uint8_t* stack){
         memcpy(&(outputQueue[indexOQ++]), &(operatorStack[indexOS-1]), sizeof(struct calulationObj) );
         indexOS--;
     }
-    //printf("The outputQueue size: %d\n", indexOQ);
-    //printf("The output queue: \n");
-    //printCalcStack(outputQueue, indexOQ);
+
+    //Checking that we're in graphing mode
+    if(outputQueue[indexOQ-1].code == GRAPH){
+        graphing = 1;
+        indexOQ--; //getting rid of the graph function, since I know what to do
+        uint8_t digitCount;
+
+        //Count the number of Xs in the function, and save their indicies
+        //If there are zero then I'll be able to output a constant value, but I'll first need to check
+        //the input to make sure there aren't any input errors
+        workingPointer = 0;
+        while(workingPointer != indexOQ){
+            if(outputQueue[workingPointer].code == X_VARIABLE) {
+                xIndicies[xcount] = workingPointer;
+                xcount++;
+            }
+            workingPointer++;
+        }
+
+        //Send a message to screen telling the user to enter a three digit domain that will be mirrored
+        //Call get_key_pressed() to evaluate what this is (make sure to ignore everything except for numbers)
+        //Then convert the input to a number
+
+        GLCD_GoTo(0,2);
+        GLCD_WriteString("                     ");//write second half of expression
+        GLCD_GoTo(0,3);
+        GLCD_WriteString("                     ");
+        GLCD_GoTo(0,4);
+        GLCD_WriteString("                     ");
+        GLCD_GoTo(0,5);
+        GLCD_WriteString("                     ");
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("                     ");
+        GLCD_GoTo(0,7);
+        GLCD_WriteString("                     ");
+
+        GLCD_GoTo(0,3);
+        GLCD_WriteString("Enter Domain x such");
+        GLCD_GoTo(0,4);
+        GLCD_WriteString("Domain = [-x, +x]");
+
+        //Ignoring anything that isn't a number press
+        char displayString[4] = {0};
+        digitCount = 0;
+        while(digitCount <3){
+            char key = get_char_key();
+            switch (key){
+            case '0':
+                domainInput += 0 * (100/pow(10,digitCount));
+                displayString[digitCount] = '0';
+                break;
+            case '1':
+                domainInput += 1 * (100/pow(10,digitCount));
+                displayString[digitCount] = '1';
+                break;
+            case '2':
+                domainInput += 2 * (100/pow(10,digitCount));
+                displayString[digitCount] = '2';
+                break;
+            case '3':
+                domainInput += 3 * (100/pow(10,digitCount));
+                displayString[digitCount] = '3';
+                break;
+            case '4':
+                domainInput += 4 * (100/pow(10,digitCount));
+                displayString[digitCount] = '4';
+                break;
+            case '5':
+                domainInput += 5 * (100/pow(10,digitCount));
+                displayString[digitCount] = '5';
+                break;
+            case '6':
+                domainInput += 6 * (100/pow(10,digitCount));
+                displayString[digitCount] = '6';
+                break;
+            case '7':
+                domainInput += 7 * (100/pow(10,digitCount));
+                displayString[digitCount] = '7';
+                break;
+            case '8':
+                domainInput += 8 * (100/pow(10,digitCount));
+                displayString[digitCount] = '8';
+                break;
+            case '9':
+                domainInput += 9 * (100/pow(10,digitCount));
+                displayString[digitCount] = '9';
+                break;
+            default:
+                domainInput += 0;
+                //displayString[i] = '0';
+                digitCount--;
+                break;
+            }
+            digitCount++;
+            GLCD_GoTo(0,5);
+            GLCD_WriteString(displayString);
+        }
+        //with the given value of x the domain will be [-x,x]
+        //Scale this so that I can have only 128 points to plot
+
+        //Getting the size of the domain
+        float stepSize = (float)(domainInput*2+1) / 128.0;
+        char dummy[100];
+
+        inputArray[0] = -domainInput;
+        for(i = 1; i< 128; i++){
+            inputArray[i] = inputArray[i-1]+stepSize;
+        }
+        //Then with this array of 128 values, enter those into the X places of my function
+        //and send the output to some graphing function
+        //Note: this will be a for loop
+    }
+    //This will only loop through once if there's no X-Variable
+    struct calulationObj originalOQ[STACK_SIZE];
+    memcpy(originalOQ, outputQueue, sizeof outputQueue);
+    uint8_t q;
+    for(q=0; q <128; q++){
+        memcpy(outputQueue, originalOQ, sizeof outputQueue);
+        //Subing in the inpt value to the x locations
+        for(i=0; i<xcount; i++){
+            //This is a double check just to be sure
+            if(outputQueue[xIndicies[i]].code == X_VARIABLE){
+                outputQueue[xIndicies[i]].number = inputArray[q];
+            }
+        }
 
     workingPointer = 0;
     secondaryPointer = 0;
@@ -337,13 +479,61 @@ float calculations(uint8_t* stack){
                     //"Killing" the operands
                     outputQueue[secondaryPointer].dead = 1;
                     break;
+                case DEG_TO_RAD:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = degToRad(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case RAD_TO_DEG:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Doing calculation
+                    holder = radToDeg(outputQueue[secondaryPointer].number);
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
+                case GRAPH:
+                    secondaryPointer = workingPointer-1;
+                    while(outputQueue[secondaryPointer].dead == 1)
+                        secondaryPointer--;
+                    //Just doing a reassignment here
+                    holder = outputQueue[secondaryPointer].number;
+                    //Putting output into the last queue position and changing it to a number
+                    outputQueue[workingPointer].number = holder;
+                    outputQueue[workingPointer].numOrCode = 0;
+                    //"Killing" the operands
+                    outputQueue[secondaryPointer].dead = 1;
+                    break;
             }
         }
         //printf("At position [%d] The holder value thus far: %f\n",workingPointer, holder);
         holder = 0;
         workingPointer++;
     }
+    //This will allow us to break out of the function if it's not a loop
+    if(graphing == 0)
+        break; //for breaking out of the for loop if the function is not graphing
+    else
+        outputArray[q] = outputQueue[indexOQ-1].number;
+    }
     //The last value in the queue will hold the final value
+    //And this won't matter if we're not graphing
+    if(graphing){
+        //call the graphing function and pass through the entire array
+        //graphingFunc(outputArray);
+    }
+    
     answer = outputQueue[indexOQ-1].number;
     return answer;
 }
@@ -357,23 +547,23 @@ float calculations(uint8_t* stack){
 //Return Value: will return 0 if everything went fine
 //                   return 1 if there's an error (and we need to beep at someone)
 //********************************************************************************
-uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding){
+uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding, uint8_t* alternateFunc){
     float answer;
     int tempIndex = *index;
     char tempString[6] = "      ";
     if((adding == 'A') | (adding == 'B')| (adding == 'C') | (adding == 'D')){
         switch(adding){
         case 'A':
-            if(alternateFunc == ALTERNATE_1)
-                alternateFunc = NORMAL;
+            if(*alternateFunc == ALTERNATE_1)
+                *alternateFunc = NORMAL;
             else
-                alternateFunc = ALTERNATE_1;
+                *alternateFunc = ALTERNATE_1;
             break;
         case 'B':
-            if(alternateFunc == ALTERNATE_2)
-                alternateFunc = NORMAL;
+            if(*alternateFunc == ALTERNATE_2)
+                *alternateFunc = NORMAL;
             else
-                alternateFunc = ALTERNATE_2;
+                *alternateFunc = ALTERNATE_2;
             break;
         case 'C':
             stackPointer = 0;
@@ -384,15 +574,14 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
         case 'D':
             if(stackPointer!= 0){
             if(stackCheck(stack, stackPointer)){
-                stackPointer =0;
+                stackPointer = 0;
+                sprintf(result, "Error invalid input");
                 return 1;
             }
             answer = calculations(stack);
-            GLCD_GoTo(0,6);
-            GLCD_WriteString("testing");
-
+/*
+ * This gives an error of [3.9 -7 = -3.99]
             // This is from Stack overflow, should be put in another function
-
             char *tmpSign = (answer < 0) ? "-" : "";
             float tmpVal = (answer < 0) ? -answer : answer;
 
@@ -401,13 +590,17 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
             int tmpInt2 = trunc(tmpFrac * 1000);  // Turn into integer (123).
 
             // Print as parts, note that you need 0-padding for fractional bit.
-            sprintf (result, "%s%d.%03d", tmpSign, tmpInt1, tmpInt2);
+            sprintf (result, "%s%d.%d", tmpSign, tmpInt1, tmpInt2);
+            */
+            if((answer > 2147000000) | (answer < -2147000000)){
+                sprintf(result, "Error, too big/small");
+                return 1;
+            }
+            else if((answer < 0) & (answer > -0.0001))
+                sprintf(result, "0.0");
+            else
+                sprintf(result, "%.4f", answer);
 
-            // End of function
-            /********************************************************
-             * Need to find a way to incorporate checking for if the output is -0,
-             * or if the output is too big (maybe this isn't an issue tho)
-             */
 
             stackPointer =0;
             return 2;
@@ -423,233 +616,234 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
             switch(adding)
                 {
                 case '1': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = ONE;
                         strcpy(tempString,"1    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = PLUS;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"+    ");
                     }
                     else {
                         stack[stackPointer++] = SIN;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"sin( ");
                         tempIndex+=3;
                     }
                     break;
                 case '2': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = TWO;
                         strcpy(tempString,"2    ");
                     }
-                    else if (alternateFunc == ALTERNATE_1){
+                    else if (*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = MINUS;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"-    ");
                     }
                     else {
                         stack[stackPointer++] = COS;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"cos( ");
                         tempIndex+=3;
                     }
                     break;
                 case '3': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = THREE;
                         strcpy(tempString,"3    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = DIVIDE;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"/    ");
                     }
                     else{
                         stack[stackPointer++] = TAN;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"tan( ");
                         tempIndex+=3;
                     }
                     break;
                 case '4': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = FOUR;
                         strcpy(tempString,"4    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = MULTIPLY;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"*    ");
                     }
                     else {
                         stack[stackPointer++] = ARCSIN;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"asin(");
                         tempIndex+=4;
                     }
                     break;
                 case '5': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                     stack[stackPointer++] = FIVE;
                     strcpy(tempString,"5    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         asm("nop");
                         tempIndex--;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                     }
                     else{
                         stack[stackPointer++] = ARCCOS;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"acos(");
                         tempIndex+=4;
                     }
                     break;
                 case '6': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = SIX;
                         strcpy(tempString,"6    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         asm("nop");
                         tempIndex--;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                     }
                     else{
                         stack[stackPointer++] = ARCTAN;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"atan(");
                         tempIndex+=4;
                     }
                     break;
                 case '7': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = SEVEN;
                         strcpy(tempString,"7    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = E_TO_THE_X;
-                        alternateFunc = NORMAL;
-                        strcpy(tempString,"e^X  ");
-                        tempIndex+=2;
+                        *alternateFunc = NORMAL;
+                        strcpy(tempString,"e^   ");
+                        tempIndex+=1;
                     }
                     else{
                         stack[stackPointer++] = FACTORIAL;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"!(   ");
                         tempIndex+=1;
                     }
                     break;
                 case '8': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = EIGHT;
                         strcpy(tempString,"8    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = NATURAL_LOG;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"ln(  ");
                         tempIndex+=2;
                     }
                     else{
                         //THIS IS probably unnecessary here since it's only for graphing mode
                         stack[stackPointer++] = X_VARIABLE;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"X    ");
                     }
                     break;
                 case '9': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = NINE;
                         strcpy(tempString,"9    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = LOG10;
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"log( ");
                         tempIndex+=3;
                     }
                     else{
-                        asm("nop");
-                        tempIndex--;
-                        alternateFunc = NORMAL;
+                        stack[stackPointer++] = PI;
+                        strcpy(tempString,"PI   ");
+                        tempIndex++;
+                        *alternateFunc = NORMAL;
                     }
                     break;
                 case '*': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         //PROVISION TO DISALLOW DECIMALS NEXT TO EACH OTHER
                         if(stack[stackPointer-1] != DECIMAL){
                             stack[stackPointer++] = DECIMAL;
                             strcpy(tempString,".    ");
                         }
+                        else
+                            return 0;
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = OPEN_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,"(    ");
                     }
                     else{
-                        stack[stackPointer] = GRAPH;
-                        //calling the graphing function and resetting stack pointer to zero
+                        stack[stackPointer++] = GRAPH;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        *alternateFunc = NORMAL;
+                        strcpy(tempString,"f(x)=( ");
+                        tempIndex+=5;
 
-                        stackPointer = 0;
-                        //graphFunction(stack);
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                     }
                     break;
                 case '0': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                         stack[stackPointer++] = ZERO;
                         strcpy(tempString,"0    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
+                        *alternateFunc = NORMAL;
                         //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
-                        if(stack[stackPointer-1] != CARROT)
+                        if(stack[stackPointer-1] != CARROT){
                             stack[stackPointer++] = CARROT;
-                        alternateFunc = NORMAL;
-                        strcpy(tempString,"^    ");
+                            strcpy(tempString,"^    ");
+                        }
+                        else
+                            return 0;
                     }
                     else{
-                        //Will treat these specially within the stackCheck function (also DON'T WANT TO
-                        stack[stackPointer] = DEG_TO_RAD;
-                        if(stackCheck(stack, stackPointer))
-                            return 1;
-                        answer = degToRad(convertToNum(stack, 0, stackPointer-1));
-                        //outputFunc(answer);
-                        stackPointer = 0;
-                        alternateFunc = NORMAL;
+                        stack[stackPointer++] = DEG_TO_RAD;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        *alternateFunc = NORMAL;
+                        strcpy(tempString,"DtoR( ");
+                        tempIndex+=4;
                     }
                     break;
                 case '#': //
-                    if(alternateFunc == NORMAL){
+                    if(*alternateFunc == NORMAL){
                     stack[stackPointer++] = NEGATIVE_SIGN;
                     strcpy(tempString,"-    ");
                     }
-                    else if(alternateFunc == ALTERNATE_1){
+                    else if(*alternateFunc == ALTERNATE_1){
                         stack[stackPointer++] = CLOSE_PAREN;
-                        alternateFunc = NORMAL;
+                        *alternateFunc = NORMAL;
                         strcpy(tempString,")    ");
                     }
                     else{
-                        //Will treat these specially within the stackCheck function
-                        stack[stackPointer] = RAD_TO_DEG;
-                        if(stackCheck(stack, stackPointer))
-                            return 1;
-                        answer = radToDeg(convertToNum(stack, 0, stackPointer-1));
-                        //outputFunc(answer);
-                        stackPointer = 0;
-                        alternateFunc = NORMAL;
+                        stack[stackPointer++] = RAD_TO_DEG;
+                        stack[stackPointer++] = OPEN_PAREN;
+                        *alternateFunc = NORMAL;
+                        strcpy(tempString,"RtoD( ");
+                        tempIndex+=4;
                     }
                     break;
             }
@@ -671,6 +865,7 @@ void graphFunction(uint8_t* stack) {
 	//answer = calculations(stack);
 
 }
+
 
 //**********************************************
 //This function works well enough, but it also produces slight rounding errors
@@ -803,3 +998,4 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
 
     return 0;
 }
+

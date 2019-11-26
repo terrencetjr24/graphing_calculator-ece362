@@ -1,4 +1,4 @@
-src/main.o: ../src/main.c ../src/KS0108.h ../src/graphic.h \
+src/main.o: ../src/main.c ../src/KS0108.h \
  /Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/CMSIS/device/stm32f0xx.h \
  /Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/CMSIS/core/core_cm0.h \
  /Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/CMSIS/core/core_cmInstr.h \
@@ -29,8 +29,6 @@ src/main.o: ../src/main.c ../src/KS0108.h ../src/graphic.h \
  ../src/parsing.h
 
 ../src/KS0108.h:
-
-../src/graphic.h:
 
 /Users/terrencerandall/Documents/Fall_19/ece362/workspace/362_project/CMSIS/device/stm32f0xx.h:
 
