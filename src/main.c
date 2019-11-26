@@ -353,8 +353,8 @@ int main(void)
 
     GLCD_GoTo(0,0);
     GLCD_WriteString(line1);//write first half of expression
-    GLCD_GoTo(0,3);
-    GLCD_WriteString("Alt Func. Status: NUM");
+    //GLCD_GoTo(0,3);
+    //GLCD_WriteString("Alt Func. Status: NUM");
     GLCD_GoTo(0,4);
     GLCD_WriteString("0-9 = Numbers");
     GLCD_GoTo(0,5);
@@ -493,8 +493,8 @@ int main(void)
 
         if(alternateFunc == NORMAL){
 
-            GLCD_GoTo(0,3);
-            GLCD_WriteString("Alt Func. Status: NUM");
+            //GLCD_GoTo(0,3);
+            //GLCD_WriteString("Alt Func. Status: NUM");
 
             GLCD_GoTo(0,4);
             GLCD_WriteString("0-9 = Numbers");
@@ -506,8 +506,8 @@ int main(void)
             GLCD_WriteString("       C=CLR| D=ENTER");
         }
         else if(alternateFunc == ALTERNATE_1){
-            GLCD_GoTo(0,3);
-            GLCD_WriteString("Alt Func. Status: AF1");
+            //GLCD_GoTo(0,3);
+            //GLCD_WriteString("Alt Func. Status: AF1");
 
             GLCD_GoTo(0,4);
             GLCD_WriteString("1='+' | 2='-' | 3='/'");
@@ -520,8 +520,8 @@ int main(void)
 
         }
         else{
-            GLCD_GoTo(0,3);
-            GLCD_WriteString("Alt Func. Status: AF2");
+            //GLCD_GoTo(0,3);
+            //GLCD_WriteString("Alt Func. Status: AF2");
 
             GLCD_GoTo(0,4);
             GLCD_WriteString("1=sin | 2=cos |3=tan");
@@ -536,4 +536,5 @@ int main(void)
     }
     return 0;
 }
+
 

@@ -244,7 +244,7 @@ float calculations(uint8_t* stack){
         //Scale this so that I can have only 128 points to plot
 
         //Getting the size of the domain
-        float stepSize = (float)(domainInput*2+1) / 128.0;
+        float stepSize = (float)(domainInput*2) / 128.0;
         char dummy[100];
 
         inputArray[0] = -domainInput;
@@ -531,9 +531,18 @@ float calculations(uint8_t* stack){
     //And this won't matter if we're not graphing
     if(graphing){
         //call the graphing function and pass through the entire array
-        //graphingFunc(inputArray, outputArray, domain);
+        graphingFunc(inputArray, outputArray, domainInput);
+        /*for(i=0;i<128;i++){
+            sprintf(dummy,"#%d, val: %.4f", i, outputArray[i]);
+            GLCD_GoTo(0,7);
+            GLCD_WriteString("                     ");
+            GLCD_GoTo(0,7);
+            GLCD_WriteString(dummy);
+            micro_wait(100000);
+        }*/
+
     }
-    
+
     answer = outputQueue[indexOQ-1].number;
     return answer;
 }
@@ -854,15 +863,71 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
     return 0;
 }
 
-void graphFunction(uint8_t* stack) {
+void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
 
-	// Prompt for domain (at least max x - domain = (-x,x) )
+    //micro_wait(10000000);
+    GLCD_ClearScreen();
+    // Axes
+    for(int i = 0; i < 128; i++)
+    {
+        //on(i,32);
+        GLCD_SetPixel(i,32,'b');
+    }
+
+    for(int i = 0; i < 64; i++)
+    {
+        //on(64,i);
+        GLCD_SetPixel(64,i,'b');
+    }
+    //GLCD_GoTo(0,2);
+    //GLCD_WriteString("it works 2");
+    float ymax = outputArray[0];
+    float ymin = outputArray[0];
+
+    for (int j = 1; j < 128; j++)
+    {
+        if (ymin > outputArray[j])
+        {
+            ymin = outputArray[j];
+        }
+
+        if (ymax < outputArray[j])
+        {
+            ymax = outputArray[j];
+        }
+    }
+
+    float ystep = (ymax - ymin) / 64;
+    /*char dummy[100];
+
+    sprintf(dummy,"%.4f", ymin);
+    GLCD_GoTo(0,5);
+    GLCD_WriteString(dummy);
+    sprintf(dummy,"%.4f", ymax);
+    GLCD_GoTo(0,6);
+    GLCD_WriteString(dummy);
+    sprintf(dummy,"%.4f", ystep);
+    GLCD_GoTo(0,7);
+    GLCD_WriteString(dummy);
+    micro_wait(10000000);*/
+
+
+    for (int xpix = 0; xpix < 128; xpix++)
+    {
+        int ypix = (int) ((outputArray[xpix] - ymin) / ystep);
+
+        GLCD_SetPixel(xpix,ypix,'b');
+
+    }
+    while(get_char_key() != 'D');
+
+    // Prompt for domain (at least max x - domain = (-x,x) )
 
     // graphing function should do the same as enter - basically,
     // loop from 0 to 127 and call eval function with X replaced by pixel #
     // need to prompt for domain first.
-
-	//answer = calculations(stack);
+    GLCD_ClearScreen();
+    //answer = calculations(stack);
 
 }
 

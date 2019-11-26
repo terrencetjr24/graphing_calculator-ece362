@@ -94,7 +94,7 @@ float convertToNum(uint8_t* stack, uint8_t firstIndex, uint8_t lastIndex);
 double factorial(double);
 double radToDeg(double input);
 double degToRad(double input);
-
+void graphingFunc(float * inputArray, float * outputArray, uint16_t domain);
 void micro_wait(unsigned int);
 
 #endif /* PARSING_H_ */
