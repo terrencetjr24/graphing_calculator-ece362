@@ -867,21 +867,10 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
 
     //micro_wait(10000000);
     GLCD_ClearScreen();
-    // Axes
-    for(int i = 0; i < 128; i++)
-    {
-        //on(i,32);
-        GLCD_SetPixel(i,32,'b');
-    }
 
-    for(int i = 0; i < 64; i++)
-    {
-        //on(64,i);
-        GLCD_SetPixel(64,i,'b');
-    }
     //GLCD_GoTo(0,2);
     //GLCD_WriteString("it works 2");
-    float ymax = outputArray[0];
+    /*float ymax = outputArray[0];
     float ymin = outputArray[0];
 
     for (int j = 1; j < 128; j++)
@@ -897,7 +886,71 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
         }
     }
 
-    float ystep = (ymax - ymin) / 64;
+    float ystep = (ymax - ymin) / 64;*/
+
+    float yscreenmax = 10; //specified by user
+    float yscreenmin = -10; //specified by user
+    int yaxispos = 32; // middle position
+
+    float xscreenmax = 0; //specified by user
+    float xscreenmin = 0; //specified by user
+    int xaxispos = 64; // middle position
+
+    //Axes
+
+    // x axis
+    if (yscreenmin >= 0.0)
+    {
+        yscreenmin = 0;
+        yaxispos = 0;
+    }
+    else if (yscreenmax < 0.0)
+    {
+        yscreenmax = 0;
+        yaxispos = 63;
+    }
+    else
+    {
+        yaxispos = -64 * yscreenmin / (yscreenmax - yscreenmin);
+    }
+
+    // x axis
+    for(int i = 0; i < 128; i++)
+    {
+        //on(i,32);
+        GLCD_SetPixel(i,yaxispos,'b');
+    }
+
+    // y axis
+    if (xscreenmin > 0.0)
+    {
+        xscreenmin = 0;
+        xaxispos = 0;
+    }
+    else if (xscreenmax < 0.0)
+    {
+        xscreenmax = 0;
+        xaxispos = 127;
+    }
+    // y axis
+    for(int i = 0; i < 64; i++)
+    {
+        //on(64,i);
+        GLCD_SetPixel(64,i,'b');
+    }
+
+    float ystep = (yscreenmax - yscreenmin) / 64;
+
+    for (int xpix = 0; xpix < 128; xpix++)
+    {
+        int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);
+
+        if (ypix >= 0 && ypix < 64)
+        {
+            GLCD_SetPixel(xpix,ypix,'b');
+        }
+    }
+
     /*char dummy[100];
 
     sprintf(dummy,"%.4f", ymin);
@@ -911,14 +964,29 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
     GLCD_WriteString(dummy);
     micro_wait(10000000);*/
 
+    // Axes
+    /*for(int i = 0; i < 128; i++)
+    {
+        //on(i,32);
+        GLCD_SetPixel(i,32,'b');
+    }
 
-    for (int xpix = 0; xpix < 128; xpix++)
+    for(int i = 0; i < 64; i++)
+    {
+        //on(64,i);
+        GLCD_SetPixel(64,i,'b');
+    }*/
+
+    /*for (int xpix = 0; xpix < 128; xpix++)
     {
         int ypix = (int) ((outputArray[xpix] - ymin) / ystep);
 
         GLCD_SetPixel(xpix,ypix,'b');
 
-    }
+    }*/
+
+
+
     while(get_char_key() != 'D');
 
     // Prompt for domain (at least max x - domain = (-x,x) )
@@ -1063,4 +1131,5 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
 
     return 0;
 }
+
 

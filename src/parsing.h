@@ -98,3 +98,4 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain);
 void micro_wait(unsigned int);
 
 #endif /* PARSING_H_ */
+

@@ -31,7 +31,28 @@ int8_t history[16] = {0};
 int8_t lookup[16] = {1,4,7,0xe,2,5,8,0,3,6,9,0xf,0xa,0xb,0xc,0xd};
 char char_lookup[16] = {'1','4','7','*','2','5','8','0','3','6','9','#','A','B','C','D'};
 char screen[2][8][64] = {0};
-//char screen[2][64][8] = {0};
+
+
+void setup_GPIOB(void){
+  RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+  GPIOB->MODER = GPIO_MODER_MODER10_1;
+  GPIOB->AFR[1] |= 0x200;
+}
+
+void setup_tim2(void){
+  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+  TIM2->ARR = 4500;
+  TIM2->PSC = 99;
+  TIM2->CR1 &=~ TIM_CR1_DIR;
+  TIM2->CR1 &=~ TIM_CR1_CMS;
+  TIM2->CR1 |= TIM_CR1_ARPE;
+  TIM2->CCMR2 &=~ TIM_CCMR2_CC3S | TIM_CCMR2_OC3M;
+  TIM2->CCMR2 |= TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_1;
+  TIM2->CCER |= TIM_CCER_CC3E;
+  TIM2->BDTR |= TIM_BDTR_MOE;
+  TIM2->CCR3 = 700;
+  TIM2->CR1 |= TIM_CR1_CEN;
+}
 
 // Writing pixels to screen is not working in manual function, so using built-in
 // library function to do pixel writing instead
@@ -257,6 +278,8 @@ char get_char_key() {
 
 void init_hardware(void)
 {
+    setup_tim2();
+    setup_GPIOB();
     GLCD_Initalize();
     GLCD_ClearScreen();
     init_keypad();
@@ -536,5 +559,4 @@ int main(void)
     }
     return 0;
 }
-
 
