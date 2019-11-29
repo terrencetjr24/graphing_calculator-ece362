@@ -48,7 +48,8 @@ float calculations(uint8_t* stack){
         //If the value is a digit
         if(((stack[workingPointer] <= NEGATIVE_SIGN) && (stack[workingPointer] > -1)) | (stack[workingPointer] == PI) | (stack[workingPointer] == X_VARIABLE)){
             if(stack[workingPointer] == PI){
-                calcStack[calcStackPointer].number = 3.14159;
+                //Had to reduce precision to allow sin(PI) to work
+                calcStack[calcStackPointer].number = 3.1415;
                 calcStack[calcStackPointer++].numOrCode = 0;
             }
             else if(stack[workingPointer] == X_VARIABLE){
@@ -84,15 +85,10 @@ float calculations(uint8_t* stack){
                 calcStack[calcStackPointer++].numOrCode = 6;
             }
         }
-        //printf("Iteration: %d\n", workingPointer);
         workingPointer++;
     }
-    //Just for checking the calcStack (simulation)
-    //printf("The calc stack: \n");
-    //printCalcStack(calcStack, calcStackPointer);
 
     //THE ACTUAL ALGORITHM
-
     struct calulationObj outputQueue[STACK_SIZE];
     int indexOQ=0;
     struct calulationObj operatorStack[STACK_SIZE];
@@ -271,7 +267,7 @@ float calculations(uint8_t* stack){
 
     workingPointer = 0;
     secondaryPointer = 0;
-    int thirdPointer = 0;
+    uint8_t thirdPointer = 0;
     float holder = 0;
     while(workingPointer != indexOQ){
         if((outputQueue[workingPointer].numOrCode == 0) | (outputQueue[workingPointer].dead == 1))
@@ -517,7 +513,6 @@ float calculations(uint8_t* stack){
                     break;
             }
         }
-        //printf("At position [%d] The holder value thus far: %f\n",workingPointer, holder);
         holder = 0;
         workingPointer++;
     }
@@ -532,14 +527,6 @@ float calculations(uint8_t* stack){
     if(graphing){
         //call the graphing function and pass through the entire array
         graphingFunc(inputArray, outputArray, domainInput);
-        /*for(i=0;i<128;i++){
-            sprintf(dummy,"#%d, val: %.4f", i, outputArray[i]);
-            GLCD_GoTo(0,7);
-            GLCD_WriteString("                     ");
-            GLCD_GoTo(0,7);
-            GLCD_WriteString(dummy);
-            micro_wait(100000);
-        }*/
 
     }
 
@@ -587,26 +574,16 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                     return 1;
                 }
                 answer = calculations(stack);
-    /*
-     * This gives an error of [3.9 -7 = -3.99]
-                // This is from Stack overflow, should be put in another function
-                char *tmpSign = (answer < 0) ? "-" : "";
-                float tmpVal = (answer < 0) ? -answer : answer;
 
-                int tmpInt1 = tmpVal;                  // Get the integer (678).
-                float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
-                int tmpInt2 = trunc(tmpFrac * 1000);  // Turn into integer (123).
-
-                // Print as parts, note that you need 0-padding for fractional bit.
-                sprintf (result, "%s%d.%d", tmpSign, tmpInt1, tmpInt2);
-                */
                 if((answer > 2147000000) | (answer < -2147000000)){
                     sprintf(result, "Error, too big/small");
                     stackPointer = 0;
                     return 1;
                 }
-                else if((answer < 0) && (answer > -0.0001)) sprintf(result, "0.0");
-                else sprintf(result, "%.4f", answer);
+                else if((answer < 0) && (answer > -0.0001))
+                    sprintf(result, "0.0");
+                else
+                    sprintf(result, "%.4f", answer);
                 stackPointer =0;
                 return 2;
             }
@@ -785,7 +762,6 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                         tempIndex+=2;
                     }
                     else{
-                        //THIS IS probably unnecessary here since it's only for graphing mode
                         stack[stackPointer++] = X_VARIABLE;
                         *alternateFunc = NORMAL;
                         strcpy(tempString,"X                   ");
@@ -841,8 +817,11 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                             stack[stackPointer++] = GRAPH;
                             stack[stackPointer++] = OPEN_PAREN;
                             *alternateFunc = NORMAL;
-                            strcpy(tempString,"f(x)=               ");
-                            tempIndex+=4;
+                            //Need the open parenthesis here to signal to the user
+                            //that they need to close the parenthesis at the end of the input
+                            //otherwise the "graph" function will not work like a function
+                            strcpy(tempString,"f(x)=(              ");
+                            tempIndex+=5;
                         }
                     }
                     break;
@@ -852,6 +831,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                         stack[stackPointer++] = ZERO;
                         strcpy(tempString,"0                   ");
                     }
+                    //The clear button
                     else if(*alternateFunc == ALTERNATE_1){
                         stackPointer = 0;
                         tempIndex = 1;
@@ -871,16 +851,23 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 case '#':
                     bkspStack[(*bkspIndex)] = 1;
                     if(*alternateFunc == NORMAL){
-                        stack[stackPointer++] = NEGATIVE_SIGN;
-                        strcpy(tempString,"-                   ");
+                        //PROVISION TO DISALLOW CARROTS NEXT TO EACH OTHER
+                        if(stack[stackPointer-1] != NEGATIVE_SIGN){
+                            stack[stackPointer++] = NEGATIVE_SIGN;
+                            strcpy(tempString,"-                   ");
+                        }
                     }
+                    //Previous answer (for inserting into the function)
                     else if(*alternateFunc == ALTERNATE_1){
+                        /*
                         memcpy(tempString,result,20);
                         char dec[1] = ".";
                         char neg[1] = "-";
                         char spc[1] = " ";
                         char chars = 48;
                         int i = 0;
+                        */
+                        /*
                         while(tempString[i] != ' '){
                             //GLCD_ClearRow(3);
                             //GLCD_GoTo(0,3);
@@ -889,6 +876,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                             chars++;
                             i++;
                         }
+                        */
                         /*for(int i = 0; i < sizeof tempString; i++){
                             if(strncmp(&(tempString[i]),dec,1) != 0 && strncmp(&(tempString[i]),neg,1) != 0 && strncmp(&(tempString[i]),spc,1) != 0){
                                 stack[stackPointer++] = tempString[i] - 48;
@@ -904,12 +892,19 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                             }
                             else chars--;
                         }*/
+                        /*
                         GLCD_GoTo(0,3);
                         GLCD_WriteString(&chars);
                         micro_wait(10000000);
                         *alternateFunc = NORMAL;
                         tempIndex+=(chars-1);
                         bkspStack[(*bkspIndex)] = chars;
+                        */
+                        bkspStack[(*bkspIndex)] = 3;
+                        stack[stackPointer++] = PREV_ANS;
+                        *alternateFunc = NORMAL;
+                        strcpy(tempString,"ANS                  ");
+                        tempIndex+=2;
                     }
                     else{
                         bkspStack[(*bkspIndex)] = 4;
@@ -931,6 +926,17 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
 }
 
 void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
+
+    uint8_t q;
+    uint8_t Nans = 0;
+    for(q=0; q<128 ;q++){
+        if( (!(outputArray[q] > 5)) && (!(outputArray[q] < 5)) && (!(outputArray[q] == 5)))
+            Nans++;
+    }
+    if(Nans >= 64){
+        //Print an error message to the screen indicating the error
+        //Can either wait a second or two then automatically return, or wait for a button press
+    }
 
     //micro_wait(10000000);
     GLCD_ClearScreen();
@@ -966,54 +972,42 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
     //Axes
 
     // x axis
-    if (yscreenmin >= 0.0)
-    {
+    if (yscreenmin >= 0.0){
         yscreenmin = 0;
         yaxispos = 0;
     }
-    else if (yscreenmax < 0.0)
-    {
+    else if (yscreenmax < 0.0){
         yscreenmax = 0;
         yaxispos = 63;
     }
     else
-    {
         yaxispos = -64 * yscreenmin / (yscreenmax - yscreenmin);
-    }
 
     // x axis
-    for(int i = 0; i < 128; i++)
-    {
+    for(int i = 0; i < 128; i++){
         //on(i,32);
         GLCD_SetPixel(i,yaxispos,'b');
     }
 
     // y axis
-    if (xscreenmin > 0.0)
-    {
+    if (xscreenmin > 0.0){
         xscreenmin = 0;
         xaxispos = 0;
     }
-    else if (xscreenmax < 0.0)
-    {
+    else if (xscreenmax < 0.0){
         xscreenmax = 0;
         xaxispos = 127;
     }
     // y axis
-    for(int i = 0; i < 64; i++)
-    {
+    for(int i = 0; i < 64; i++){
         //on(64,i);
         GLCD_SetPixel(64,i,'b');
     }
 
     float ystep = (yscreenmax - yscreenmin) / 64;
-
-    for (int xpix = 0; xpix < 128; xpix++)
-    {
+    for (int xpix = 0; xpix < 128; xpix++){
         int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);
-
-        if (ypix >= 0 && ypix < 64)
-        {
+        if (ypix >= 0 && ypix < 64){
             GLCD_SetPixel(xpix,ypix,'b');
         }
     }
@@ -1052,12 +1046,9 @@ void graphingFunc(float * inputArray, float * outputArray, uint16_t domain) {
 
     }*/
 
-
-
     while(get_char_key() != 'D');
 
     // Prompt for domain (at least max x - domain = (-x,x) )
-
     // graphing function should do the same as enter - basically,
     // loop from 0 to 127 and call eval function with X replaced by pixel #
     // need to prompt for domain first.
@@ -1083,13 +1074,12 @@ float convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
     int workingIndex;
 
     if(beg == end){
-        //printf("The beg equals the ends\n"); //just for simulation
         return returnVal;
     }
     //returning it to zero since it wasn't needed earlier
     returnVal = 0;
 
-    int i;
+    uint8_t i;
     //Incrementing through the value in the stack to "find" a decimal and assign it's index
     for(i=beg; i<=end; i++){
         if(stack[i] == DECIMAL)
@@ -1163,54 +1153,50 @@ double factorial(double input){
     return output;
 }
 
-//Checking that:
-//Open parens == closing parens
-//...
+//Checking (in order) that:
+//The last item in stack is a number or a closed parenthesis (or, that it's NOT an operator)
+//Done in for loop: checking '(' == ')' , no operations next to one another, if not graphing and an X-Var is present
+//Things blocked in the stack manipulations:
+// decimals, carrots, and negative signs next to itself
 uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
     uint8_t openParens = 0;
     uint8_t closedParens = 0;
-    int i;
+    uint8_t i;
+    uint8_t prevIsOp = 0;
+    uint8_t graphing =0;
 
-    //special case for if the last thing pressed was a RAD/DEG conversion
-    if( (stack[stackPointer] == RAD_TO_DEG) || (stack[stackPointer] == DEG_TO_RAD) ){
-        for(i=0; i<stackPointer; i++){
-            if(stack[i] > 11) //if there's anything other than numbers, decimals, or negative sin BEFORE the conversion operation
+    //Checking that last value is a number, or closed parenthesis, or PI, or X_VARIALE , or PREV_ANS  (or just NOT an operator)
+    //(a number can end with a decimal point [eg. 2.] but can't end in a negative)
+    if(!((stack[stackPointer-1] >=ZERO && stack[stackPointer-1] <=DECIMAL) | (stack[stackPointer-1] == CLOSE_PAREN) | (stack[stackPointer-1] == PI) | (stack[stackPointer-1] == X_VARIABLE) | (stack[stackPointer-1] == PREV_ANS)))
+        return 1;
+    if(stack[0] == GRAPH)
+        graphing =1;
+    for(i=0; i<stackPointer; i++){
+        //Checking for equal number of open an closed parenthesis
+        if(stack[i] == OPEN_PAREN){
+            openParens++;
+            prevIsOp = 0;
+        }
+        else if(stack[i] == CLOSE_PAREN){
+            closedParens++;
+            prevIsOp = 0;
+        }
+        //Checking that no operators are next to one another
+        else if(stack[i] >= PLUS && stack[i] <= MULTIPLY){
+            if(prevIsOp)
+                return 1;
+            else
+                prevIsOp = 1;
+        }
+        //If there's an X-Var, make sure that the function is graphing
+        else if (stack[i] == X_VARIABLE){
+            if(!graphing)
                 return 1;
         }
     }
-    else if(stack[stackPointer-1] > 10 && stack[stackPointer-1] != X_VARIABLE && stack[stackPointer-1] != PI){
-        return 1;//if last element is an operator
-    }
-    else if(stack[0] != GRAPH) {
-        for(i=0; i<stackPointer; i++){
-            if(stack[i] == X_VARIABLE){
-                return 1;
-            }
-        }
-    }
-    else{
-        //equal number of open/close parentheses
-        for(i=0; i<stackPointer; i++){
-            if(stack[i] == OPEN_PAREN)
-                openParens++;
-            else if(stack[i] == CLOSE_PAREN)
-                closedParens++;
-        }
-        //no operators next to each other
-        for(i=0; i<stackPointer-1; i++){
-            if(stack[i] > 10 && stack[i] != X_VARIABLE && stack[i] != PI && stack[i+1] > 10 && stack[i+1] != X_VARIABLE && stack[i+1] != PI) {
-                return 1;
-            }
-        }
-    }
-    GLCD_GoTo(0,5);
-    GLCD_WriteString(openParens);
-    GLCD_GoTo(0,5);
-    GLCD_WriteString(closedParens);
 
     if(openParens != closedParens)
         return 1;
-
 
     return 0;
 }

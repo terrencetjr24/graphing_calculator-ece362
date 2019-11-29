@@ -49,6 +49,7 @@
 
 //Added late
 #define PI 33
+#define PREV_ANS 34
 
 //STATUS CODE
 #define NORMAL          0
