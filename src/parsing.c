@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h> //For memset (clearing the struct)
 #include "parsing.h"
+#include "graphic.h"
 #include <stdint.h>
 
 #include "stm32f0xx.h"
@@ -285,6 +286,13 @@ float calculations(uint8_t* stack){
         GLCD_WriteString("then press D");
 
         xmin = getGraphValue();
+        GLCD_ClearRow(5);
+        /*char buffer[7];
+        itoa(xmin,buffer,10);
+        GLCD_GoTo(0,5);
+        GLCD_WriteString(buffer);
+        micro_wait(5000000);
+        GLCD_ClearRow(5);*/
 
         GLCD_GoTo(0,5);
         GLCD_WriteString("                     ");
@@ -294,6 +302,12 @@ float calculations(uint8_t* stack){
         GLCD_WriteString("then press D");
 
         xmax = getGraphValue();
+        /*GLCD_ClearRow(5);
+        itoa(xmax,buffer,10);
+        GLCD_GoTo(0,5);
+        GLCD_WriteString(buffer);
+        micro_wait(5000000);
+        GLCD_ClearRow(5);*/
 
         GLCD_GoTo(0,5);
         GLCD_WriteString("                     ");
@@ -303,6 +317,12 @@ float calculations(uint8_t* stack){
         GLCD_WriteString("then press D");
 
         ymin = getGraphValue();
+        /*GLCD_ClearRow(5);
+        itoa(ymin,buffer,10);
+        GLCD_GoTo(0,5);
+        GLCD_WriteString(buffer);
+        micro_wait(5000000);
+        GLCD_ClearRow(5);*/
 
         GLCD_GoTo(0,5);
         GLCD_WriteString("                     ");
@@ -312,16 +332,22 @@ float calculations(uint8_t* stack){
         GLCD_WriteString("then press D");
 
         ymax = getGraphValue();
+        /*GLCD_ClearRow(5);
+        itoa(ymax,buffer,10);
+        GLCD_GoTo(0,5);
+        GLCD_WriteString(buffer);
+        micro_wait(5000000);
+        GLCD_ClearRow(5);*/
 
         //Getting the size of the domain
-        float stepSize = (float)(xmin+xmax) / 128.0;
+        float stepSize = (float)(xmax-xmin) / 128.0;
 
         inputArray[0] = xmin;
         for(i = 1; i< 128; i++){
             inputArray[i] = inputArray[i-1]+stepSize;
         }
         //Then with this array of 128 values, enter those into the X places of my function
-        //and send the output to some graphing function
+        //and send the output to Praneeth's graphing function
         //Note: this will be a for loop
     }
     //This will only loop through once if there's no X-Variable
@@ -966,14 +992,14 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
 
     uint8_t q;
     uint8_t Nans = 0;
-    for(q=0; q<128 ;q++){
+    /*for(q=0; q<128 ;q++){
         if( (!(outputArray[q] > 5)) && (!(outputArray[q] < 5)) && (!(outputArray[q] == 5)))
             Nans++;
     }
     if(Nans >= 64){
         //Print an error message to the screen indicating the error
         //Can either wait a second or two then automatically return, or wait for a button press
-    }
+    }*/
 
     //micro_wait(10000000);
     GLCD_ClearScreen();
@@ -995,27 +1021,29 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
     }
     float ystep = (ymax - ymin) / 64;*/
 
-    float yscreenmax = 10; //specified by user
-    float yscreenmin = -10; //specified by user
+    float yscreenmax = ymax; //specified by user
+    float yscreenmin = ymin; //specified by user
     int yaxispos = 32; // middle position
 
-    float xscreenmax = 0; //specified by user
-    float xscreenmin = 0; //specified by user
+    float xscreenmax = xmax; //specified by user
+    float xscreenmin = xmin; //specified by user
     int xaxispos = 64; // middle position
 
     //Axes
 
     // x axis
-    if (yscreenmin >= 0.0){
+    if (ymin >= 0){
         yscreenmin = 0;
         yaxispos = 0;
     }
-    else if (yscreenmax < 0.0){
+    else if (ymax <= 0){
         yscreenmax = 0;
         yaxispos = 63;
     }
     else
+    {
         yaxispos = -64 * yscreenmin / (yscreenmax - yscreenmin);
+    }
 
     // x axis
     for(int i = 0; i < 128; i++){
@@ -1024,27 +1052,45 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
     }
 
     // y axis
-    if (xscreenmin > 0.0){
+    if (xmin >= 0){
         xscreenmin = 0;
         xaxispos = 0;
     }
-    else if (xscreenmax < 0.0){
+    else if (xmax <= 0){
         xscreenmax = 0;
         xaxispos = 127;
+    }
+    else
+    {
+        xaxispos = -128 * xscreenmin / (xscreenmax - xscreenmin);
     }
     // y axis
     for(int i = 0; i < 64; i++){
         //on(64,i);
-        GLCD_SetPixel(64,i,'b');
+        GLCD_SetPixel(xaxispos,i,'b');
     }
 
     float ystep = (yscreenmax - yscreenmin) / 64;
-    for (int xpix = 0; xpix < 128; xpix++){
-        int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);
+    int maxyrange = 10000;
+
+    for (int xpix = 0; xpix < 127; xpix++){
+        int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);;
+        int ynextpix = (int) ((outputArray[xpix+1] - yscreenmin) / ystep);
+
         if (ypix >= 0 && ypix < 64){
             GLCD_SetPixel(xpix,ypix,'b');
         }
+
+        if (ynextpix >= 64)
+        {
+            ynextpix = 63;
+        }
+        else if ( abs(ypix-ynextpix) < maxyrange)
+        {
+            //GLCD_Line(xpix,ypix,xpix,ynextpix);
+        }
     }
+
 
     /*char dummy[100];
     sprintf(dummy,"%.4f", ymin);

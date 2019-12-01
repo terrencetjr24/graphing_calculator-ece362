@@ -15,10 +15,13 @@ int col = 0;
 int8_t history[16] = {0};
 int8_t lookup[16] = {1,4,7,0xe,2,5,8,0,3,6,9,0xf,0xa,0xb,0xc,0xd};
 char char_lookup[16] = {'1','4','7','*','2','5','8','0','3','6','9','#','A','B','C','D'};
-char screen[2][8][64] = {0};
+//char screen[2][8][64] = {0};
 
-uint16_t tim2arr;
-uint16_t wavetable[80];
+//uint16_t tim2arr;
+//uint16_t wavetable[80];
+int wave_size = 900;
+int wavetable[900];
+int tim6count = 0;
 
 void setup_GPIOB(void){
   RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
@@ -47,25 +50,34 @@ void setup_dma(void) {
     DMA1_Channel3->CCR &= ~DMA_CCR_EN;
     DMA1_Channel3->CMAR = (uint32_t)(wavetable);
     DMA1_Channel3->CPAR = (uint32_t)&(TIM2->ARR);
-    DMA1_Channel3->CNDTR = 80;
-    DMA1_Channel3->CCR |= DMA_CCR_CIRC;
+    DMA1_Channel3->CNDTR = wave_size;
+    //DMA1_Channel3->CCR |= DMA_CCR_CIRC;
     DMA1_Channel3->CCR |= DMA_CCR_MSIZE_1 | DMA_CCR_PSIZE_1 | DMA_CCR_MINC | DMA_CCR_DIR;
     DMA1_Channel3->CCR |= DMA_CCR_EN;
 }
 
-void init_wavetable(void){
+void init_wavetable(void) {
     int x = 0;
-    //wavetable[tablesize-1] = 1;
-    while(x < 80){
-        wavetable[x] = 3500 + 200*sin(2*3.14/80*x);
-        x = x + 1;
+
+    while(x < (wave_size*1/3)){
+    wavetable[x] = 3000;
+    x = x + 1;
     }
+
+
+    while(x < (wave_size*2/3)){
+    wavetable[x] = 4500;
+    x = x + 1;
+    }
+
+    while(x < (wave_size)){
+    wavetable[x] = 1; //8000;
+    x = x + 1;
+    }
+
+    wavetable[wave_size - 1] = 1;
 }
 
-void reset_wavetable(void){
-    for(int i = 0; i < 80; i++) wavetable[i] = 1;
-    //memset(wavetable, 1, sizeof wavetable);
-}
 
 void setup_gpio() {
     RCC-> AHBENR |= RCC_AHBENR_GPIOAEN;
@@ -318,7 +330,7 @@ int main(void){
         }
         else if (error == 2)
         {
-            tim2arr = 3500;
+            setup_dma();
             //Formatting the answer
             strcpy(line2,"                     ");
             GLCD_GoTo(0,2);
