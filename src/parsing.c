@@ -27,6 +27,7 @@ int getGraphValue(){
     char key;
     char displayString[5] = {0};
     displayString[0] = '+';
+    int sign = 1;//1=plus, 0=minus
     uint8_t digitCount = 1;
     int domainInput = 0;
     int lastAdded;
@@ -85,8 +86,14 @@ int getGraphValue(){
             displayString[digitCount] = '9';
             break;
         case '#':
-            if(domainInput > 0) displayString[0] = '-';
-            else displayString[0] = '+';
+            if(sign == 1){
+                displayString[0] = '-';
+                sign = 0;
+            }
+            else {
+                displayString[0] = '+';
+                sign = 1;
+            }
             domainInput = domainInput * -1;
             digitCount--;
             break;
@@ -102,7 +109,7 @@ int getGraphValue(){
             break;
         }
         digitCount++;
-        GLCD_GoTo(0,5);
+        GLCD_GoTo(0,6);
         GLCD_WriteString(displayString);
     }
     while((key = get_char_key()) != 'D') {
@@ -114,7 +121,7 @@ int getGraphValue(){
             else displayString[0] = '+';
             domainInput = domainInput * -1;
         }
-        GLCD_GoTo(0,5);
+        GLCD_GoTo(0,6);
         GLCD_WriteString(displayString);
     }
 
@@ -267,77 +274,59 @@ float calculations(uint8_t* stack){
         //Call get_key_pressed() to evaluate what this is (make sure to ignore everything except for numbers)
         //Then convert the input to a number
 
-        GLCD_GoTo(0,2);
-        GLCD_WriteString("                     ");
-        GLCD_GoTo(0,3);
-        GLCD_WriteString("                     ");
-        GLCD_GoTo(0,4);
-        GLCD_WriteString("                     ");
-        GLCD_GoTo(0,5);
-        GLCD_WriteString("                     ");
-        GLCD_GoTo(0,6);
-        GLCD_WriteString("                     ");
-        GLCD_GoTo(0,7);
-        GLCD_WriteString("                     ");
+        GLCD_ClearRow(2);
+        GLCD_ClearRow(3);
+        GLCD_ClearRow(4);
+        GLCD_ClearRow(5);
+        GLCD_ClearRow(6);
+        GLCD_ClearRow(7);
 
         GLCD_GoTo(0,3);
         GLCD_WriteString("Enter 3-digit xmin");
         GLCD_GoTo(0,4);
         GLCD_WriteString("then press D");
+        GLCD_GoTo(0,5);
+        GLCD_WriteString("# to change sign");
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("+");
 
         xmin = getGraphValue();
-        GLCD_ClearRow(5);
-        /*char buffer[7];
-        itoa(xmin,buffer,10);
-        GLCD_GoTo(0,5);
-        GLCD_WriteString(buffer);
-        micro_wait(5000000);
-        GLCD_ClearRow(5);*/
 
-        GLCD_GoTo(0,5);
-        GLCD_WriteString("                     ");
+        GLCD_ClearRow(5);
         GLCD_GoTo(0,3);
         GLCD_WriteString("Enter 3-digit xmax");
         GLCD_GoTo(0,4);
         GLCD_WriteString("then press D");
+        GLCD_GoTo(0,5);
+        GLCD_WriteString("# to change sign");
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("+");
 
         xmax = getGraphValue();
-        /*GLCD_ClearRow(5);
-        itoa(xmax,buffer,10);
-        GLCD_GoTo(0,5);
-        GLCD_WriteString(buffer);
-        micro_wait(5000000);
-        GLCD_ClearRow(5);*/
 
-        GLCD_GoTo(0,5);
-        GLCD_WriteString("                     ");
+        GLCD_ClearRow(5);
         GLCD_GoTo(0,3);
         GLCD_WriteString("Enter 3-digit ymin");
         GLCD_GoTo(0,4);
         GLCD_WriteString("then press D");
+        GLCD_GoTo(0,5);
+        GLCD_WriteString("# to change sign");
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("+");
 
         ymin = getGraphValue();
-        /*GLCD_ClearRow(5);
-        itoa(ymin,buffer,10);
-        GLCD_GoTo(0,5);
-        GLCD_WriteString(buffer);
-        micro_wait(5000000);
-        GLCD_ClearRow(5);*/
 
-        GLCD_GoTo(0,5);
-        GLCD_WriteString("                     ");
+        GLCD_ClearRow(5);
         GLCD_GoTo(0,3);
         GLCD_WriteString("Enter 3-digit ymax");
         GLCD_GoTo(0,4);
         GLCD_WriteString("then press D");
+        GLCD_GoTo(0,5);
+        GLCD_WriteString("# to change sign");
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("+");
 
         ymax = getGraphValue();
-        /*GLCD_ClearRow(5);
-        itoa(ymax,buffer,10);
-        GLCD_GoTo(0,5);
-        GLCD_WriteString(buffer);
-        micro_wait(5000000);
-        GLCD_ClearRow(5);*/
 
         //Getting the size of the domain
         float stepSize = (float)(xmax-xmin) / 128.0;
@@ -682,8 +671,19 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 }
                 else if((answer < 0) && (answer > -0.0001))
                     sprintf(result, "0.0");
-                else
-                    sprintf(result, "%.4f", answer);
+                else {
+                    char *tmpSign = (answer < 0) ? "-" : "";
+                    float tmpVal = (answer < 0) ? -answer : answer;
+
+                    int tmpInt1 = tmpVal;                  // Get the integer (678).
+                    float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
+                    int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
+
+                    // Print as parts, note that you need 0-padding for fractional bit.
+
+                    sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);
+                    //sprintf(result, "%.3f", answer);
+                }
                 stackPointer =0;
 
                 return 2;
@@ -810,6 +810,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                         strcpy(tempString,"6    ");
                     }
                     else if(*alternateFunc == ALTERNATE_1){
+                        bkspStack[(*bkspIndex)] = 1;
                         stack[stackPointer++] = CLOSE_PAREN;
                         *alternateFunc = NORMAL;
                         strcpy(tempString,")    ");
@@ -1085,7 +1086,12 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
         {
             ynextpix = 63;
         }
-        else if ( abs(ypix-ynextpix) < maxyrange)
+        else if (ynextpix < 0)
+        {
+            ynextpix = 0;
+        }
+
+        if ( abs(ypix-ynextpix) < maxyrange)
         {
             //GLCD_Line(xpix,ypix,xpix,ynextpix);
         }
@@ -1287,7 +1293,7 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
             prevCodeStaus = 2;
         }
         //Checking that functions aren't placed directly behind numbers or constants
-        else if((stack[i] <= FACTORIAL) & (stack[i] >= E_TO_THE_X)){
+        else if(((stack[i] <= FACTORIAL) && (stack[i] >= E_TO_THE_X)) && stack[i] != CARROT){
             if((prevCodeStaus == 2) | (prevCodeStaus == 3))
                 return 1;
             prevCodeStaus = 4;
@@ -1297,6 +1303,5 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
     if(openParens != closedParens)
         return 1;
 
-    return 0;
     return 0;
 }
