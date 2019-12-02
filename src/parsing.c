@@ -671,7 +671,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 }
                 else if((answer < 0) && (answer > -0.0001))
                     sprintf(result, "0.0");
-                else {/*
+                else {
                     char *tmpSign = (answer < 0) ? "-" : "";
                     double tmpVal = (answer < 0) ? -answer : answer;
 
@@ -681,8 +681,8 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
 
                     // Print as parts, note that you need 0-padding for fractional bit.
 
-                    sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);*/
-                    sprintf(result, "%.4f", answer);
+                    sprintf (result, "%s%d.%04d", tmpSign, tmpInt1, tmpInt2);
+                    //sprintf(result, "%.4f", answer);
                 }
                 stackPointer =0;
 
@@ -1076,6 +1076,7 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
 
     double ystep = (yscreenmax - yscreenmin) / 64;
     int maxyrange = 10000;
+    char outPix[128] = {0};
 
     for (int xpix = 0; xpix < 127; xpix++){
         int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);;
@@ -1085,19 +1086,7 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
             GLCD_SetPixel(xpix,ypix,'b');
         }
 
-        if (ynextpix >= 64)
-        {
-            ynextpix = 63;
-        }
-        else if (ynextpix < 0)
-        {
-            ynextpix = 0;
-        }
-
-        if ( abs(ypix-ynextpix) < maxyrange)
-        {
-            //GLCD_Line(xpix,ypix,xpix,ynextpix);
-        }
+        outPix[xpix] = ypix;
     }
 
 
@@ -1105,11 +1094,9 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
     double xval = 0;
     double yval = 0;
     char coord[100] = {0};
+    GLCD_ClearRow(7);
     while(1)
     {
-        GLCD_ClearRow(7);
-        GLCD_GoTo(0,7);
-        GLCD_WriteString("got here");
         char keyG = get_char_key();
 
         if (keyG == 'D')
@@ -1134,28 +1121,45 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
             xindex = 127;
         }
 
+        if (outPix[xindex] >= 8 && outPix[xindex] < 64)
+        {
+            for (int yrow = 8; yrow < outPix[xindex - 1]; yrow++)
+            {
+                GLCD_ClearPixel(xindex - 1,yrow,'b');
+            }
+
+            for (int yrow = 8; yrow < outPix[xindex]; yrow++)
+            {
+                GLCD_SetPixel(xindex,yrow,'b');
+            }
+        }
+
         xval = inputArray[xindex];
         yval = outputArray[xindex];
 
-        GLCD_ClearRow(7);
+        /*GLCD_ClearRow(7);
         GLCD_GoTo(0,7);
-        GLCD_WriteString("got here 2");
-        /*char *tmpSign = (answer < 0) ? "-" : "";
-        double tmpVal = (answer < 0) ? -answer : answer;
+        GLCD_WriteString("got here 2");*/
+        char *tmpSignX = (xval < 0) ? "-" : "+";
+        double tmpValX = (xval < 0) ? -xval : xval;
 
-        int tmpInt1 = tmpVal;                  // Get the integer (678).
-        double tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
-        int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
+        int tmpInt1X = tmpValX;                  // Get the integer (678).
+        double tmpFracX = tmpValX - tmpInt1X;      // Get fraction (0.0123).
+        int tmpInt2X = trunc(tmpFracX * 1000);  // Turn into integer (123).
+
+        char *tmpSignY = (yval < 0) ? "-" : "+";
+        double tmpValY = (yval < 0) ? -yval : yval;
+
+        int tmpInt1Y = tmpValY;                  // Get the integer (678).
+        double tmpFracY = tmpValY - tmpInt1Y;      // Get fraction (0.0123).
+        int tmpInt2Y = trunc(tmpFracY * 1000);  // Turn into integer (123).
 
         // Print as parts, note that you need 0-padding for fractional bit.
 
-        sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);*/
-        sprintf(coord, "%f", xval);
+        sprintf (coord, "x=%s%d.%03d, y=%s%d.%03d", tmpSignX, tmpInt1X, tmpInt2X, tmpSignY, tmpInt1Y, tmpInt2Y);
+        //sprintf(coord, "%f", xval);
 
-        GLCD_ClearRow(6);
-        GLCD_GoTo(0,6);
-        GLCD_WriteString("got here 3");
-        GLCD_ClearRow(7);
+
         GLCD_GoTo(0,7);
         GLCD_WriteString(coord);
 

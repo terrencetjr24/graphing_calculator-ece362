@@ -65,9 +65,9 @@ void GLCD_ClearRow(int row)
 void GLCD_WriteChar(char charToWrite)
 {
 int i;
-charToWrite -= 32; 
-for(i = 0; i < 5; i++) 
-  GLCD_WriteData(GLCD_ReadByteFromROMMemory((char *)((int)font5x8 + (5 * charToWrite) + i))); 
+charToWrite -= 32;
+for(i = 0; i < 5; i++)
+  GLCD_WriteData(GLCD_ReadByteFromROMMemory((char *)((int)font5x8 + (5 * charToWrite) + i)));
 GLCD_WriteData(0x00);
 }
 //-------------------------------------------------------------------------------------------------
@@ -95,13 +95,27 @@ GLCD_WriteData(tmp);
 //-------------------------------------------------------------------------------------------------
 //
 //-------------------------------------------------------------------------------------------------
+void GLCD_ClearPixel(unsigned char x, unsigned char y, unsigned char color)
+{
+unsigned char tmp;
+GLCD_GoTo(x, 7 - (y / 8));
+tmp = GLCD_ReadData();
+GLCD_GoTo(x, 7 - (y / 8));
+tmp = GLCD_ReadData();
+GLCD_GoTo(x, 7 - (y / 8));
+tmp &= ~(1 << (7 - y % 8));
+GLCD_WriteData(tmp);
+}
+//-------------------------------------------------------------------------------------------------
+//
+//-------------------------------------------------------------------------------------------------
 void GLCD_Bitmap(char * bmp, unsigned char x, unsigned char y, unsigned char dx, unsigned char dy)
 {
 unsigned char i, j;
 for(j = 0; j < dy / 8; j++)
   {
   GLCD_GoTo(x,y + j);
-  for(i = 0; i < dx; i++) 
+  for(i = 0; i < dx; i++)
     GLCD_WriteData(GLCD_ReadByteFromROMMemory(bmp++));
   }
 }
