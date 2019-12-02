@@ -28,10 +28,10 @@ int getGraphValue(){
     char key;
     char displayString[5] = {0};
     displayString[0] = '+';
-    int sign = 1;//1=plus, 0=minus
     uint8_t digitCount = 1;
     int domainInput = 0;
     int lastAdded;
+    int isPos = 1;//1 == pos, -1 == neg
     while(digitCount < 4){
         key = get_char_key();
         backspace:
@@ -87,15 +87,9 @@ int getGraphValue(){
             displayString[digitCount] = '9';
             break;
         case '#':
-            if(sign == 1){
-                displayString[0] = '-';
-                sign = 0;
-            }
-            else {
-                displayString[0] = '+';
-                sign = 1;
-            }
-            domainInput = domainInput * -1;
+            if(isPos == 1) displayString[0] = '-';
+            else displayString[0] = '+';
+            isPos = isPos * -1;
             digitCount--;
             break;
         case 'C':
@@ -118,13 +112,19 @@ int getGraphValue(){
             goto backspace;
         }
         if(key == '#'){
-            if(domainInput > 0) displayString[0] = '-';
+            if(isPos == 1) displayString[0] = '-';
             else displayString[0] = '+';
-            domainInput = domainInput * -1;
+            isPos = isPos * -1;
         }
         GLCD_GoTo(0,6);
         GLCD_WriteString(displayString);
     }
+    domainInput *= isPos;
+    char buffer[20];
+    itoa(domainInput,buffer,10);
+    GLCD_ClearRow(7);
+    GLCD_GoTo(0,7);
+    GLCD_WriteString(buffer);
 
     return domainInput;
 }
@@ -1039,7 +1039,7 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
     // x axis
     if (ymin >= 0){
         yscreenmin = 0;
-        yaxispos = 0;
+        yaxispos = 8;
     }
     else if (ymax <= 0){
         yscreenmax = 0;
@@ -1047,7 +1047,7 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
     }
     else
     {
-        yaxispos = -64 * yscreenmin / (yscreenmax - yscreenmin);
+        yaxispos = -56 * yscreenmin / (yscreenmax - yscreenmin) + 8;
     }
 
     // x axis
@@ -1070,33 +1070,35 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
         xaxispos = -128 * xscreenmin / (xscreenmax - xscreenmin);
     }
     // y axis
-    for(int i = 0; i < 64; i++){
+    for(int i = 8; i < 64; i++){
         //on(64,i);
         GLCD_SetPixel(xaxispos,i,'b');
     }
 
-    double ystep = (yscreenmax - yscreenmin) / 64;
-    int maxyrange = 10000;
+    double ystep = (yscreenmax - yscreenmin) / 56;
+    //int maxyrange = 10000;
     char outPix[128] = {0};
 
     for (int xpix = 0; xpix < 127; xpix++){
-        int ypix = (int) (0 + (outputArray[xpix] - yscreenmin) / ystep);
+        int ypix = (int) (8 + (outputArray[xpix] - yscreenmin) / ystep);
         //int ynextpix = (int) ((outputArray[xpix+1] - yscreenmin) / ystep);
 
-        if (ypix >= 0 && ypix < 64){
+        if (ypix >= 8 && ypix < 64){
             GLCD_SetPixel(xpix,ypix,'b');
         }
 
         outPix[xpix] = ypix;
     }
 
-    /*
+
 
     int xindex = 0;
     double xval = 0;
     double yval = 0;
     char coord[20] = {0};
     GLCD_ClearRow(7);
+    GLCD_GoTo(0,7);
+    GLCD_WriteString("Trace: *=L, #=R");
     while(1)
     {
         char keyG = get_char_key();
@@ -1144,11 +1146,8 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
 
         xval = inputArray[xindex];
         yval = outputArray[xindex];
-        */
-        /*GLCD_ClearRow(7);
-        GLCD_GoTo(0,7);
-        GLCD_WriteString("got here 2");*/
-        /*char *tmpSignX = (xval < 0) ? "-" : "+";
+
+        char *tmpSignX = (xval < 0) ? "-" : "+";
         double tmpValX = (xval < 0) ? -xval : xval;
 
         int tmpInt1X = tmpValX;                  // Get the integer (678).
@@ -1171,13 +1170,13 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
         GLCD_GoTo(0,7);
         GLCD_WriteString(coord);
 
-    }*/
+    }
 
     // Prompt for domain (at least max x - domain = (-x,x) )
     // graphing function should do the same as enter - basically,
     // loop from 0 to 127 and call eval function with X replaced by pixel #
     // need to prompt for domain first.
-    while (get_char_key() != 'D');
+    //while (get_char_key() != 'D');
     GLCD_ClearScreen();
     //answer = calculations(stack);
 
