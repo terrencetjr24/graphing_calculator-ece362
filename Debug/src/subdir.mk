@@ -9,6 +9,7 @@ S_SRCS += \
 C_SRCS += \
 ../src/KS0108-STM32.c \
 ../src/KS0108.c \
+../src/graphic.c \
 ../src/main.c \
 ../src/parsing.c \
 ../src/parsingutility.c \
@@ -18,6 +19,7 @@ C_SRCS += \
 OBJS += \
 ./src/KS0108-STM32.o \
 ./src/KS0108.o \
+./src/graphic.o \
 ./src/main.o \
 ./src/micro_wait.o \
 ./src/parsing.o \
@@ -28,6 +30,7 @@ OBJS += \
 C_DEPS += \
 ./src/KS0108-STM32.d \
 ./src/KS0108.d \
+./src/graphic.d \
 ./src/main.d \
 ./src/parsing.d \
 ./src/parsingutility.d \

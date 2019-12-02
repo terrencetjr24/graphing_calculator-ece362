@@ -1306,20 +1306,22 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
         else if(stack[i] >= PLUS && stack[i] <= MULTIPLY){
             if((prevCodeStaus == 1) | (prevCodeStaus == 5))
                 return 1;
-            else
-                prevCodeStaus = 1;
+            prevCodeStaus = 1;
         }
         //Checking if the previous thing is a number
         else if((stack[i] == PREV_ANS) | (stack[i] == PI)){
-            if(prevCodeStaus == 2)
+            if(prevCodeStaus == 2 | prevCodeStaus == 3)
                 return 1;
             prevCodeStaus = 3;
         }
         //If there's an X-Var, make sure that the function is graphing
+        //and checking for a previous constant or number
         else if (stack[i] == X_VARIABLE){
-            prevCodeStaus = 0;
+            if(prevCodeStaus == 3 | prevCodeStaus == 2)
+                return 1;
             if(!graphing)
                 return 1;
+            prevCodeStaus = 3;
         }
         //Checking that numbers aren't placed directly behind constant values
         else if((stack[i] <= NEGATIVE_SIGN) & (stack[i] > -1)){
