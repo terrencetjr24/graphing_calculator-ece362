@@ -994,6 +994,30 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
     uint8_t Nans = 0;
     GLCD_ClearScreen();
 
+    for(q=0; q<128 ;q++)
+    {
+    	if( (!(outputArray[q] > 5)) && (!(outputArray[q] < 5)) && (!(outputArray[q] == 5)))
+    	{
+    		outputArray[q] = 0;
+    	}
+	}
+
+    /*
+    int undefNumThresh = 64;
+	if(Nans >= undefNumThresh)
+	{
+		//Print an error message to the screen indicating the error
+		GLCD_GoTo(0,0);
+		GLCD_WriteString("Error: Plotting");
+		GLCD_GoTo(0,1);
+		GLCD_WriteString("Domain Undefined");
+		//Can either wait a second or two then automatically return, or wait for a button press
+		GLCD_GoTo(0,1);
+		GLCD_WriteString("Enter to clear");
+		while (get_char_key() != 'D');
+		return;
+	}
+	*/
     double yscreenmax = ymax; //specified by user
     double yscreenmin = ymin; //specified by user
     int yaxispos = 32; // middle position
