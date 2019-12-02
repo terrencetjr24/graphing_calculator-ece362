@@ -19,8 +19,8 @@ char char_lookup[16] = {'1','4','7','*','2','5','8','0','3','6','9','#','A','B',
 
 //uint16_t tim2arr;
 //uint16_t wavetable[80];
-int wave_size = 900;
-int wavetable[900];
+int wave_size = 600;
+int wavetable[600];
 int tim6count = 0;
 
 void setup_GPIOB(void){
@@ -56,24 +56,63 @@ void setup_dma(void) {
     DMA1_Channel3->CCR |= DMA_CCR_EN;
 }
 
-void init_wavetable(void) {
+void init_wavetable_1(void) {
     int x = 0;
 
-    while(x < (wave_size*1/3)){
+    while(x < (wave_size*1/2)){
     wavetable[x] = 3000;
     x = x + 1;
     }
 
 
-    while(x < (wave_size*2/3)){
+    while(x < (wave_size)){
     wavetable[x] = 4500;
     x = x + 1;
     }
 
-    while(x < (wave_size)){
-    wavetable[x] = 1; //8000;
+    wavetable[wave_size - 1] = 1;
+}
+
+void init_wavetable_2(void) {
+    int x = 0;
+
+    while(x < (wave_size*1/2)){
+    wavetable[x] = 4500;
     x = x + 1;
     }
+
+
+    while(x < (wave_size)){
+    wavetable[x] = 3000;
+    x = x + 1;
+    }
+
+    wavetable[wave_size - 1] = 1;
+}
+
+void init_wavetable_3(void) {
+    int x = 0;
+
+    while(x < (wave_size*1/4)){
+        wavetable[x] = 3000;
+        x = x + 1;
+    }
+
+    while(x < (wave_size*1/2)){
+        wavetable[x] = 4000;
+        x = x + 1;
+    }
+
+    while(x < (wave_size*3/4)){
+        wavetable[x] = 4500;
+        x = x + 1;
+    }
+
+    while(x < (wave_size)){
+        wavetable[x] = 2000;
+        x = x + 1;
+    }
+
 
     wavetable[wave_size - 1] = 1;
 }
@@ -204,7 +243,7 @@ char get_char_key() {
 void init_hardware(void){
     setup_tim2();
     setup_GPIOB();
-    init_wavetable();
+    init_wavetable_3();
     GLCD_Initalize();
     GLCD_ClearScreen();
     init_keypad();
@@ -303,9 +342,8 @@ int main(void){
 
 
         if (error == 1){
-            //DMA1_Channel3->CCR &= ~DMA_CCR_EN;
-
-            //DMA enable
+            init_wavetable_1();
+            setup_dma();
 
             GLCD_GoTo(0,2);
             GLCD_WriteString(result);//write output
@@ -327,9 +365,11 @@ int main(void){
             GLCD_WriteString(line2);//write second half of expression
             GLCD_GoTo(0,2);
             GLCD_WriteString(line2);
+
         }
         else if (error == 2)
         {
+            init_wavetable_2();
             setup_dma();
             //Formatting the answer
             strcpy(line2,"                     ");

@@ -614,7 +614,6 @@ double calculations(uint8_t* stack){
     //The last value in the queue will hold the final value
     //And this won't matter if we're not graphing
     if(graphing){
-        //call the graphing function and pass through the entire array
         graphingFunc(inputArray, outputArray, xmin, xmax, ymin, ymax);
         return 0;
     }
@@ -991,40 +990,9 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
 }
 
 void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax, int ymin, int ymax) {
-
     uint8_t q;
     uint8_t Nans = 0;
-    /*for(q=0; q<128 ;q++){
-        if( (!(outputArray[q] > 5)) && (!(outputArray[q] < 5)) && (!(outputArray[q] == 5)))
-            Nans++;
-    }
-    if(Nans >= 64){
-        //Print an error message to the screen indicating the error
-        //Can either wait a second or two then automatically return, or wait for a button press
-    }*/
-
-    for(int i = 0; i < 128; i++){
-        //GLCD_SetPixel(i,32,'b');
-    }
-    //micro_wait(10000000);
     GLCD_ClearScreen();
-
-    //GLCD_GoTo(0,2);
-    //GLCD_WriteString("it works 2");
-    /*double ymax = outputArray[0];
-    double ymin = outputArray[0];
-    for (int j = 1; j < 128; j++)
-    {
-        if (ymin > outputArray[j])
-        {
-            ymin = outputArray[j];
-        }
-        if (ymax < outputArray[j])
-        {
-            ymax = outputArray[j];
-        }
-    }
-    double ystep = (ymax - ymin) / 64;*/
 
     double yscreenmax = ymax; //specified by user
     double yscreenmin = ymin; //specified by user
