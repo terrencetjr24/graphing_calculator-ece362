@@ -5,6 +5,7 @@
 #include "parsing.h"
 #include "graphic.h"
 #include <stdint.h>
+#include "KS0108.h"
 
 #include "stm32f0xx.h"
 #include "stm32f0_discovery.h"
@@ -676,8 +677,8 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                     double tmpVal = (answer < 0) ? -answer : answer;
 
                     int tmpInt1 = tmpVal;                  // Get the integer (678).
-                    double tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
-                    int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
+                    double tmpFrac = round(10000*(tmpVal - tmpInt1));      // Get fraction (0.0123).
+                    int tmpInt2 = trunc(tmpFrac);  // Turn into integer (123).
 
                     // Print as parts, note that you need 0-padding for fractional bit.
 
@@ -1079,8 +1080,8 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
     char outPix[128] = {0};
 
     for (int xpix = 0; xpix < 127; xpix++){
-        int ypix = (int) ((outputArray[xpix] - yscreenmin) / ystep);;
-        int ynextpix = (int) ((outputArray[xpix+1] - yscreenmin) / ystep);
+        int ypix = (int) (0 + (outputArray[xpix] - yscreenmin) / ystep);
+        //int ynextpix = (int) ((outputArray[xpix+1] - yscreenmin) / ystep);
 
         if (ypix >= 0 && ypix < 64){
             GLCD_SetPixel(xpix,ypix,'b');
@@ -1089,15 +1090,27 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
         outPix[xpix] = ypix;
     }
 
+    /*
 
     int xindex = 0;
     double xval = 0;
     double yval = 0;
-    char coord[100] = {0};
+    char coord[20] = {0};
     GLCD_ClearRow(7);
     while(1)
     {
         char keyG = get_char_key();
+
+        if (outPix[xindex] >= 8 && outPix[xindex] < 64)
+        {
+            for (int yrow = 8; yrow < outPix[xindex]; yrow++)
+            {
+                if (yrow != yaxispos && xindex != xaxispos)
+                {
+                    GLCD_ClearPixel(xindex,yrow,'b');
+                }
+            }
+        }
 
         if (keyG == 'D')
         {
@@ -1123,11 +1136,6 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
 
         if (outPix[xindex] >= 8 && outPix[xindex] < 64)
         {
-            for (int yrow = 8; yrow < outPix[xindex - 1]; yrow++)
-            {
-                GLCD_ClearPixel(xindex - 1,yrow,'b');
-            }
-
             for (int yrow = 8; yrow < outPix[xindex]; yrow++)
             {
                 GLCD_SetPixel(xindex,yrow,'b');
@@ -1136,11 +1144,11 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
 
         xval = inputArray[xindex];
         yval = outputArray[xindex];
-
+        */
         /*GLCD_ClearRow(7);
         GLCD_GoTo(0,7);
         GLCD_WriteString("got here 2");*/
-        char *tmpSignX = (xval < 0) ? "-" : "+";
+        /*char *tmpSignX = (xval < 0) ? "-" : "+";
         double tmpValX = (xval < 0) ? -xval : xval;
 
         int tmpInt1X = tmpValX;                  // Get the integer (678).
@@ -1152,23 +1160,24 @@ void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax,
 
         int tmpInt1Y = tmpValY;                  // Get the integer (678).
         double tmpFracY = tmpValY - tmpInt1Y;      // Get fraction (0.0123).
-        int tmpInt2Y = trunc(tmpFracY * 1000);  // Turn into integer (123).
+        int tmpInt2Y = trunc(tmpFracY * 100);  // Turn into integer (123).
 
         // Print as parts, note that you need 0-padding for fractional bit.
 
-        sprintf (coord, "x=%s%d.%03d, y=%s%d.%03d", tmpSignX, tmpInt1X, tmpInt2X, tmpSignY, tmpInt1Y, tmpInt2Y);
+        sprintf (coord, "x=%s%d.%02d, y=%s%d.%02d", tmpSignX, tmpInt1X, tmpInt2X, tmpSignY, tmpInt1Y, tmpInt2Y);
         //sprintf(coord, "%f", xval);
 
 
         GLCD_GoTo(0,7);
         GLCD_WriteString(coord);
 
-    }
+    }*/
 
     // Prompt for domain (at least max x - domain = (-x,x) )
     // graphing function should do the same as enter - basically,
     // loop from 0 to 127 and call eval function with X replaced by pixel #
     // need to prompt for domain first.
+    while (get_char_key() != 'D');
     GLCD_ClearScreen();
     //answer = calculations(stack);
 
