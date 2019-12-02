@@ -11,7 +11,7 @@
 
 //Parsing global variables
 uint8_t stackPointer = 0;
-float answer;// = NULL;
+double answer;// = NULL;
 
 /* Note:
  * Will be creating 2 different stack within these sets of functions:
@@ -101,8 +101,8 @@ int getGraphValue(){
             if(digitCount > 1) {
                 displayString[--digitCount] = ' ';
                 domainInput -= lastAdded;
-                digitCount--;
             }
+            digitCount--;
             break;
         default:
             digitCount--;
@@ -128,7 +128,7 @@ int getGraphValue(){
     return domainInput;
 }
 
-float calculations(uint8_t* stack){
+double calculations(uint8_t* stack){
     uint8_t graphing = 0;
     uint8_t workingPointer = 0;
     uint8_t secondaryPointer;
@@ -144,8 +144,8 @@ float calculations(uint8_t* stack){
     int ymin = 0;
     int ymax = 0;
     uint8_t i;
-    float outputArray[128];
-    float inputArray[128];
+    double outputArray[128];
+    double inputArray[128];
     memset (outputArray, 0, sizeof outputArray);
     memset (inputArray, 0, sizeof inputArray);
     memset(xIndicies, -1, sizeof xIndicies);
@@ -288,7 +288,7 @@ float calculations(uint8_t* stack){
         GLCD_GoTo(0,5);
         GLCD_WriteString("# to change sign");
         GLCD_GoTo(0,6);
-        GLCD_WriteString("+");
+        GLCD_WriteString("+   ");
 
         xmin = getGraphValue();
 
@@ -300,7 +300,7 @@ float calculations(uint8_t* stack){
         GLCD_GoTo(0,5);
         GLCD_WriteString("# to change sign");
         GLCD_GoTo(0,6);
-        GLCD_WriteString("+");
+        GLCD_WriteString("+   ");
 
         xmax = getGraphValue();
 
@@ -312,7 +312,7 @@ float calculations(uint8_t* stack){
         GLCD_GoTo(0,5);
         GLCD_WriteString("# to change sign");
         GLCD_GoTo(0,6);
-        GLCD_WriteString("+");
+        GLCD_WriteString("+   ");
 
         ymin = getGraphValue();
 
@@ -324,12 +324,12 @@ float calculations(uint8_t* stack){
         GLCD_GoTo(0,5);
         GLCD_WriteString("# to change sign");
         GLCD_GoTo(0,6);
-        GLCD_WriteString("+");
+        GLCD_WriteString("+   ");
 
         ymax = getGraphValue();
 
         //Getting the size of the domain
-        float stepSize = (float)(xmax-xmin) / 128.0;
+        double stepSize = (double)(xmax-xmin) / 128.0;
 
         inputArray[0] = xmin;
         for(i = 1; i< 128; i++){
@@ -356,7 +356,7 @@ float calculations(uint8_t* stack){
     workingPointer = 0;
     secondaryPointer = 0;
     uint8_t thirdPointer = 0;
-    float holder = 0;
+    double holder = 0;
     while(workingPointer != indexOQ){
         if((outputQueue[workingPointer].numOrCode == 0) | (outputQueue[workingPointer].dead == 1))
             asm("nop"); //This might not work lol
@@ -633,7 +633,7 @@ float calculations(uint8_t* stack){
 //********************************************************************************
 uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, char* result, char adding, uint8_t* alternateFunc, int * bkspStack, int* bkspIndex){
     int tempIndex = *index;
-    //float answer;
+    //double answer;
     char tempString[21] = "                     ";
     if((adding == 'A') | (adding == 'B')| (adding == 'C') | (adding == 'D')){
         switch(adding){
@@ -671,18 +671,18 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 }
                 else if((answer < 0) && (answer > -0.0001))
                     sprintf(result, "0.0");
-                else {
+                else {/*
                     char *tmpSign = (answer < 0) ? "-" : "";
-                    float tmpVal = (answer < 0) ? -answer : answer;
+                    double tmpVal = (answer < 0) ? -answer : answer;
 
                     int tmpInt1 = tmpVal;                  // Get the integer (678).
-                    float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
+                    double tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
                     int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
 
                     // Print as parts, note that you need 0-padding for fractional bit.
 
-                    sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);
-                    //sprintf(result, "%.3f", answer);
+                    sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);*/
+                    sprintf(result, "%.4f", answer);
                 }
                 stackPointer =0;
 
@@ -989,7 +989,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
     return 0;
 }
 
-void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, int ymin, int ymax) {
+void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax, int ymin, int ymax) {
 
     uint8_t q;
     uint8_t Nans = 0;
@@ -1002,13 +1002,16 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
         //Can either wait a second or two then automatically return, or wait for a button press
     }*/
 
+    for(int i = 0; i < 128; i++){
+        //GLCD_SetPixel(i,32,'b');
+    }
     //micro_wait(10000000);
     GLCD_ClearScreen();
 
     //GLCD_GoTo(0,2);
     //GLCD_WriteString("it works 2");
-    /*float ymax = outputArray[0];
-    float ymin = outputArray[0];
+    /*double ymax = outputArray[0];
+    double ymin = outputArray[0];
     for (int j = 1; j < 128; j++)
     {
         if (ymin > outputArray[j])
@@ -1020,14 +1023,14 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
             ymax = outputArray[j];
         }
     }
-    float ystep = (ymax - ymin) / 64;*/
+    double ystep = (ymax - ymin) / 64;*/
 
-    float yscreenmax = ymax; //specified by user
-    float yscreenmin = ymin; //specified by user
+    double yscreenmax = ymax; //specified by user
+    double yscreenmin = ymin; //specified by user
     int yaxispos = 32; // middle position
 
-    float xscreenmax = xmax; //specified by user
-    float xscreenmin = xmin; //specified by user
+    double xscreenmax = xmax; //specified by user
+    double xscreenmin = xmin; //specified by user
     int xaxispos = 64; // middle position
 
     //Axes
@@ -1071,7 +1074,7 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
         GLCD_SetPixel(xaxispos,i,'b');
     }
 
-    float ystep = (yscreenmax - yscreenmin) / 64;
+    double ystep = (yscreenmax - yscreenmin) / 64;
     int maxyrange = 10000;
 
     for (int xpix = 0; xpix < 127; xpix++){
@@ -1098,37 +1101,65 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
     }
 
 
-    /*char dummy[100];
-    sprintf(dummy,"%.4f", ymin);
-    GLCD_GoTo(0,5);
-    GLCD_WriteString(dummy);
-    sprintf(dummy,"%.4f", ymax);
-    GLCD_GoTo(0,6);
-    GLCD_WriteString(dummy);
-    sprintf(dummy,"%.4f", ystep);
-    GLCD_GoTo(0,7);
-    GLCD_WriteString(dummy);
-    micro_wait(10000000);*/
-
-    // Axes
-    /*for(int i = 0; i < 128; i++)
+    int xindex = 0;
+    double xval = 0;
+    double yval = 0;
+    char coord[100] = {0};
+    while(1)
     {
-        //on(i,32);
-        GLCD_SetPixel(i,32,'b');
+        GLCD_ClearRow(7);
+        GLCD_GoTo(0,7);
+        GLCD_WriteString("got here");
+        char keyG = get_char_key();
+
+        if (keyG == 'D')
+        {
+            break;
+        }
+        else if (keyG == '*')
+        {
+            xindex--;
+        }
+        else if (keyG == '#')
+        {
+            xindex++;
+        }
+
+        if (xindex < 0)
+        {
+            xindex = 0;
+        }
+        else if (xindex >= 128)
+        {
+            xindex = 127;
+        }
+
+        xval = inputArray[xindex];
+        yval = outputArray[xindex];
+
+        GLCD_ClearRow(7);
+        GLCD_GoTo(0,7);
+        GLCD_WriteString("got here 2");
+        /*char *tmpSign = (answer < 0) ? "-" : "";
+        double tmpVal = (answer < 0) ? -answer : answer;
+
+        int tmpInt1 = tmpVal;                  // Get the integer (678).
+        double tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
+        int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
+
+        // Print as parts, note that you need 0-padding for fractional bit.
+
+        sprintf (result, "%s%d.%03d\n", tmpSign, tmpInt1, tmpInt2);*/
+        sprintf(coord, "%f", xval);
+
+        GLCD_ClearRow(6);
+        GLCD_GoTo(0,6);
+        GLCD_WriteString("got here 3");
+        GLCD_ClearRow(7);
+        GLCD_GoTo(0,7);
+        GLCD_WriteString(coord);
+
     }
-    for(int i = 0; i < 64; i++)
-    {
-        //on(64,i);
-        GLCD_SetPixel(64,i,'b');
-    }*/
-
-    /*for (int xpix = 0; xpix < 128; xpix++)
-    {
-        int ypix = (int) ((outputArray[xpix] - ymin) / ystep);
-        GLCD_SetPixel(xpix,ypix,'b');
-    }*/
-
-    while(get_char_key() != 'D');
 
     // Prompt for domain (at least max x - domain = (-x,x) )
     // graphing function should do the same as enter - basically,
@@ -1144,7 +1175,7 @@ void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, i
 //This function works well enough, but it also produces slight rounding errors
 //that may throw some calculations off
 //**********************************************
-float convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
+double convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
     //Note:
     //If all errors in input were taken care of carefully, and the proper indices
     //are given, all the value in this range should be numbers.
@@ -1152,7 +1183,7 @@ float convertToNum(uint8_t* stack, uint8_t beg, uint8_t end){
     int decimal = -1;
     int placesBeforeDec = 0;
     int placesAfterDec = 0;
-    float returnVal = stack[beg];
+    double returnVal = stack[beg];
     int workingIndex;
 
     if(beg == end){

@@ -72,7 +72,7 @@
 
 struct calulationObj
 {
-   float number;
+   double number;
    uint8_t code;
    uint8_t numOrCode;  //If the value is a 0 it's a number,
                     //if it's greater than 0 that's it's precedence (higher == higher precedence)
@@ -88,14 +88,14 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
 //Called within above function to check the validity of an input [returns a 1 for error, 0 for no error]
 uint8_t stackCheck(uint8_t* stack, uint8_t pointer);
 //used to calculate the result after enter is pressed (this is where everything is going on)
-float calculations(uint8_t* stack);
+double calculations(uint8_t* stack);
 //Used for converting a part of the stack to a number
-float convertToNum(uint8_t* stack, uint8_t firstIndex, uint8_t lastIndex);
+double convertToNum(uint8_t* stack, uint8_t firstIndex, uint8_t lastIndex);
 
 double factorial(double);
 double radToDeg(double input);
 double degToRad(double input);
-void graphingFunc(float * inputArray, float * outputArray, int xmin, int xmax, int ymin, int ymax);
+void graphingFunc(double * inputArray, double * outputArray, int xmin, int xmax, int ymin, int ymax);
 int getGraphValue();
 void micro_wait(unsigned int);
 
