@@ -13,6 +13,7 @@
 //Parsing global variables
 uint8_t stackPointer = 0;
 double answer;// = NULL;
+char dummy[10];
 
 /* Note:
  * Will be creating 2 different stack within these sets of functions:
@@ -120,11 +121,11 @@ int getGraphValue(){
         GLCD_WriteString(displayString);
     }
     domainInput *= isPos;
-    char buffer[20];
-    itoa(domainInput,buffer,10);
-    GLCD_ClearRow(7);
-    GLCD_GoTo(0,7);
-    GLCD_WriteString(buffer);
+    //char buffer[20];
+    //itoa(domainInput,buffer,10);
+    //GLCD_ClearRow(7);
+    //GLCD_GoTo(0,7);
+    //GLCD_WriteString(buffer);
 
     return domainInput;
 }
@@ -275,6 +276,8 @@ double calculations(uint8_t* stack){
         //Call get_key_pressed() to evaluate what this is (make sure to ignore everything except for numbers)
         //Then convert the input to a number
 
+        domainInput:
+
         GLCD_ClearRow(2);
         GLCD_ClearRow(3);
         GLCD_ClearRow(4);
@@ -328,6 +331,19 @@ double calculations(uint8_t* stack){
         GLCD_WriteString("+   ");
 
         ymax = getGraphValue();
+
+        if(xmin >= xmax || ymin >= ymax) {
+            GLCD_ClearRow(2);
+            GLCD_ClearRow(3);
+            GLCD_ClearRow(4);
+            GLCD_ClearRow(5);
+            GLCD_ClearRow(6);
+            GLCD_ClearRow(7);
+            GLCD_GoTo(0,3);
+            GLCD_WriteString("invalid domain/range");
+            micro_wait(2500000);
+            goto domainInput;
+        }
 
         //Getting the size of the domain
         double stepSize = (double)(xmax-xmin) / 128.0;
@@ -664,6 +680,21 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 }
                 answer = calculations(stack);
 
+                char *tmpSign = (answer < 0) ? "-" : "";
+                //int signVal = (answer < 0) ? -1 : 1;
+                double tmpVal = (answer < 0) ? -1 * answer : answer;
+
+
+                int tmpInt1 = (int) tmpVal;                  // Get the integer (678).
+                double tmpFrac = round(10000*(tmpVal - tmpInt1));      // Get fraction (0.0123).
+                int tmpInt2 = trunc(tmpFrac);  // Turn into integer (123).
+
+                if (tmpInt2 == 10000)
+                {
+                	tmpInt1 += 1;
+                	tmpInt2 = 0;
+                }
+
                 if((answer > 2147000000) | (answer < -2147000000)){
                     sprintf(result, "Error, too big/small");
                     stackPointer = 0;
@@ -671,13 +702,12 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                 }
                 else if((answer < 0) && (answer > -0.0001))
                     sprintf(result, "0.0");
+                else if((tmpInt1 > 2147000000) | (answer < -2147000000)){
+                    sprintf(result, "Error, undefined");
+                    stackPointer = 0;
+                    return 1;
+                }
                 else {
-                    char *tmpSign = (answer < 0) ? "-" : "";
-                    double tmpVal = (answer < 0) ? -answer : answer;
-
-                    int tmpInt1 = tmpVal;                  // Get the integer (678).
-                    double tmpFrac = round(10000*(tmpVal - tmpInt1));      // Get fraction (0.0123).
-                    int tmpInt2 = trunc(tmpFrac);  // Turn into integer (123).
 
                     // Print as parts, note that you need 0-padding for fractional bit.
 
@@ -693,7 +723,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
     }
     //Adding to the stack
     else{
-        if(tempIndex >= 42){}
+        if(tempIndex >= 40 && !(adding == '0' && *alternateFunc == ALTERNATE_1)){}
         else{
             tempIndex++;
             switch(adding)
@@ -940,6 +970,7 @@ uint8_t stackManipulation(uint8_t * stack, char* expression, uint8_t * index, ch
                         tempIndex = 1;
                         memset(expression,32,66);
                         memset(expression,62,1);
+                        *alternateFunc = NORMAL;
                     }
                     else{
                         bkspStack[(*bkspIndex)] = 4;
@@ -1280,8 +1311,9 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
     uint8_t closedParens = 0;
     uint8_t i;
 
-    uint8_t prevCodeStaus = 0; //1 = operation, 2 = number, 3 = Constant, 4 = function, 5 = open parenthesis, 6 = closed parenthesis
-
+    uint8_t prevCodeStaus = 0; //1 = operation, 2 = number, 3 = Constant, 4 = function, 5 = open parenthesis, 6 = closed parenthesis, 7 = carrot
+    uint8_t numStart = 0; //0 = not in middle of number, 1 = number has started
+    uint8_t decPresent = 0; //0 = no decimal yet , 1 = one decimal present (should error if this number tries to grow)
     uint8_t graphing =0;
 
     //Checking that last value is a number, or closed parenthesis, or PI, or X_VARIALE , or PREV_ANS  (or just NOT an operator)
@@ -1291,28 +1323,44 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
     if(stack[0] == GRAPH)
         graphing =1;
     for(i=0; i<stackPointer; i++){
+    	//sprintf(dummy, "%d", i);
+        //GLCD_GoTo(0,3);
+        //GLCD_WriteString(dummy);
+        //micro_wait(2000000);
         //Checking for equal number of open an closed parenthesis
         if(stack[i] == OPEN_PAREN){
             openParens++;
             prevCodeStaus = 5;
+
+            numStart = 0;
+            decPresent = 0;
         }
         else if(stack[i] == CLOSE_PAREN){
-            if(prevCodeStaus == 1)
+            if(prevCodeStaus == 1 || prevCodeStaus == 5)
                 return 1;
             closedParens++;
             prevCodeStaus = 6;
+
+            numStart = 0;
+            decPresent = 0;
         }
         //Checking that no operators are next to one another, and that it wasn't a parenthesis
         else if(stack[i] >= PLUS && stack[i] <= MULTIPLY){
             if((prevCodeStaus == 1) | (prevCodeStaus == 5))
                 return 1;
             prevCodeStaus = 1;
+
+            numStart = 0;
+            decPresent = 0;
         }
         //Checking if the previous thing is a number
         else if((stack[i] == PREV_ANS) | (stack[i] == PI)){
             if(prevCodeStaus == 2 | prevCodeStaus == 3)
                 return 1;
             prevCodeStaus = 3;
+
+            numStart = 0;
+            decPresent = 0;
         }
         //If there's an X-Var, make sure that the function is graphing
         //and checking for a previous constant or number
@@ -1322,11 +1370,19 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
             if(!graphing)
                 return 1;
             prevCodeStaus = 3;
+
+            numStart = 0;
+            decPresent = 0;
         }
         //Checking that numbers aren't placed directly behind constant values
         else if((stack[i] <= NEGATIVE_SIGN) & (stack[i] > -1)){
             if(prevCodeStaus == 3)
                 return 1;
+            numStart = 1;
+            if(stack[i] == DECIMAL)
+            	decPresent++;
+            if(decPresent > 1)
+            	return 1;
             prevCodeStaus = 2;
         }
         //Checking that functions aren't placed directly behind numbers or constants
@@ -1334,7 +1390,15 @@ uint8_t stackCheck(uint8_t* stack, uint8_t stackPointer){
             if((prevCodeStaus == 2) | (prevCodeStaus == 3))
                 return 1;
             prevCodeStaus = 4;
+
+            numStart = 0;
+            decPresent = 0;
         }
+        else if(stack[i] == CARROT){
+        	prevCodeStaus = 7;
+        }
+        if(openParens < closedParens)
+            return 1;
     }
 
     if(openParens != closedParens)

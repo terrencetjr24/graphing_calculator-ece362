@@ -14,8 +14,8 @@
 #define KS0108_EN    GPIO_Pin_12
 
 // Flip CS1 and CS2 for PCB
-#define KS0108_CS1   GPIO_Pin_8
-#define KS0108_CS2   GPIO_Pin_9
+#define KS0108_CS1   GPIO_Pin_9
+#define KS0108_CS2   GPIO_Pin_8
 #define KS0108_CS3   GPIO_Pin_13
 
 #define KS0108_D0    0

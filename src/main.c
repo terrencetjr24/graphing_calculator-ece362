@@ -23,6 +23,37 @@ int wave_size = 600;
 int wavetable[600];
 int tim6count = 0;
 
+void setup_adc(void) {
+  RCC->APB2ENR |= 1<<9;   //Enable clock
+  RCC->CR2 |= 0x1;      //Turn on 14 Mhz clock
+  while(!(RCC->CR2 & 0x2)); //Wait
+  ADC1->CR |= 0x1;      //Enable adc 1
+  while(!(ADC1->ISR & 0x1));  //Wait
+  while(ADC1->CR & 0x4);    //Wait
+}
+
+int read_adc_channel() {
+    ADC1->CHSELR = 0;     //Deselect Channels
+    ADC1->CHSELR |= 1<<12; //Select the desired channel
+    //while(!(ADC1->ISR & 0x1));  //Wait for the ADC to be ready
+    ADC1->CR = 0x4;       //Start a conversion
+    //while(!(ADC1->ISR & 0x4));  //Wait for end of conversion
+    return ADC1->DR;
+}
+
+void setup_GPIOC(void){
+  RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
+
+  GPIOC->MODER |= GPIO_MODER_MODER1_0;
+  GPIOC->MODER |= GPIO_MODER_MODER2;
+  GPIOC->MODER |= GPIO_MODER_MODER3_0;
+
+  GPIOC->PUPDR |= GPIO_MODER_MODER1_1;
+  GPIOC->ODR |= 0x8;
+  GPIOC->ODR &= ~0x2;
+
+}
+
 void setup_GPIOB(void){
   RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
   GPIOB->MODER = GPIO_MODER_MODER10_1;
@@ -226,6 +257,12 @@ void TIM6_DAC_IRQHandler() {
     if (col > 3) col = 0;
 
     GPIOB->ODR = 1<<col;
+
+    float ccr_val = 0;
+    ccr_val = read_adc_channel();
+    ccr_val = ccr_val/4095.0*TIM2->ARR;
+    ccr_val = (uint32_t) ccr_val;
+    TIM2->CCR3 = ccr_val;
 }
 
 int get_key_pressed() {
@@ -250,6 +287,8 @@ void init_hardware(void){
     setup_dma();
     setup_timer6();
     setup_gpio();
+    setup_GPIOC();
+    setup_adc();
 }
 
 void graph(void) {
@@ -314,6 +353,39 @@ int main(void){
 
     init_hardware();
 
+
+    /*
+    GLCD_GoTo(0,0);
+    GLCD_WriteString("Welcome to Team");//write first half of expression
+    GLCD_GoTo(0,1);
+    GLCD_WriteString("021's calculator");
+    micro_wait(5000000);
+    GLCD_ClearRow(0);
+
+    GLCD_GoTo(0,0);
+    GLCD_WriteString("Things to know:");
+
+    GLCD_GoTo(0,1);
+    GLCD_WriteString("Press D to evaluate");
+    GLCD_GoTo(0,2);
+    GLCD_WriteString("Enter GRAPH mode");
+    GLCD_GoTo(0,3);
+    GLCD_WriteString("before typing the");
+    GLCD_GoTo(0,4);
+    GLCD_WriteString("expression");
+    GLCD_GoTo(0,5);
+    GLCD_WriteString("Example domain: '003'");
+    micro_wait(10000000);
+    GLCD_ClearScreen();*/
+
+    /*GLCD_GoTo(0,0);
+	GLCD_WriteString("And remember...");
+	micro_wait(2000000);
+	GLCD_GoTo(0,1);
+	GLCD_WriteString("A label is an address");
+	micro_wait(2000000);*/
+
+    GLCD_ClearScreen();
     GLCD_GoTo(0,0);
     GLCD_WriteString(line1);//write first half of expression
     GLCD_GoTo(0,4);
@@ -348,7 +420,7 @@ int main(void){
             GLCD_GoTo(0,2);
             GLCD_WriteString(result);//write output
             GLCD_GoTo(0,3);
-            GLCD_WriteString("PRESS ENTER!!!");//write first half of expression
+            GLCD_WriteString("PRESS D");//write first half of expression
             //print out the error message
             while (get_char_key() != 'D');
 
