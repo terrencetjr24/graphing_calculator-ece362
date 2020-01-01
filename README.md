@@ -7,5 +7,5 @@ Within src:
              
     -graphing.c: Contains the necessary functions for manipulating the display
     
-    -parsing.c: Contains the code that parses through the inputs (recieved via button presses), and calculates 
-              the output accordingly
+    -parsing.c: Contains the code that parses through the inputs (recieved via button presses), and 
+                calculates the output accordingly
