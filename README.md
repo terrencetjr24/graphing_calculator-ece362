@@ -1,3 +1,9 @@
+# Graphing Calculator Project
+
+## Disclaimer: ##
+    - The file organization is slightly disorganized
+    - All relevant files can be found within src
+
 The "src" is the folder containing all the relevant code
 
 Within src:
